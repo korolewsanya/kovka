@@ -5,39 +5,70 @@ require_post();
 
 include '../db_connection.php';
 
-$response = array();
+// Инициализация
+$success = false;
 
-if ($_POST['data'] && $_POST['izdelie'] && $_POST['image'] && $_POST['name'] && $_POST['tel']) {
-    $data = $_POST['data'];
-    $izdelie = $_POST['izdelie'];
+// Проверяем наличие обязательных полей
+if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['name'], $_POST['tel'])) {
+    // Базовая очистка и приведение типов
+    $data = trim($_POST['data']);
+    $izdelie = trim($_POST['izdelie']);
     $image = basename($_POST['image']);
-    $dlina = $_POST['dlina'] ?? '';
-    $shirina = $_POST['shirina'] ?? '';
-    $visota = $_POST['visota'] ?? '';
-    $prise = isset($_POST['prise']) ? floatval($_POST['prise']) : 0;
-    $name = $_POST['name'];
-    $tel = $_POST['tel'];
-    $email = $_POST['email'] ?? '';
-    $coment = $_POST['coment'] ?? '';
+    // Удаляем недопустимые символы в имени файла
+    $image = preg_replace('/[^A-Za-z0-9._-]/', '', $image);
+    $dlina = isset($_POST['dlina']) ? trim($_POST['dlina']) : '';
+    $shirina = isset($_POST['shirina']) ? trim($_POST['shirina']) : '';
+    $visota = isset($_POST['visota']) ? trim($_POST['visota']) : '';
+    $prise = isset($_POST['prise']) ? (float)$_POST['prise'] : 0.0;
+    $name = trim($_POST['name']);
+    $tel = trim($_POST['tel']);
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $coment = isset($_POST['coment']) ? trim($_POST['coment']) : '';
 
-    $stmt = $conn->prepare("INSERT INTO `zakaz` 
+    // Валидация email (не обязательна, очистим если неверный)
+    if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $email = '';
+    }
+
+    // Подготовленный запрос — проверяем prepare()
+    $sql = "INSERT INTO `zakaz` 
         (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param(
-        "sssssssssss",
-        $data, $izdelie, $image, $dlina, $shirina, $visota, $prise, $name, $tel, $email, $coment
-    );
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    $success = $stmt->execute();
-    $stmt->close();
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+        error_log('DB prepare error: ' . $conn->error);
+        $success = false;
+    } else {
+        // Типы: 6 строк, 1 double, 4 строки => "ssssssdssss"
+        $bind = $stmt->bind_param(
+            "ssssssdssss",
+            $data, $izdelie, $image, $dlina, $shirina, $visota, $prise, $name, $tel, $email, $coment
+        );
+
+        if ($bind === false) {
+            error_log('DB bind_param error: ' . $stmt->error);
+            $success = false;
+        } else {
+            if ($stmt->execute() === false) {
+                error_log('DB execute error: ' . $stmt->error);
+                $success = false;
+            } else {
+                $success = true;
+            }
+        }
+
+        $stmt->close();
+    }
+
     $conn->close();
 } else {
     $success = false;
-    $izdelie = $_POST['izdelie'] ?? 'Неизвестное изделие';
-    $prise = isset($_POST['prise']) ? floatval($_POST['prise']) : 0;
-    $name = $_POST['name'] ?? '';
-    $tel = $_POST['tel'] ?? '';
-    $email = $_POST['email'] ?? '';
+    $izdelie = isset($_POST['izdelie']) ? trim($_POST['izdelie']) : 'Неизвестное изделие';
+    $prise = isset($_POST['prise']) ? (float)$_POST['prise'] : 0.0;
+    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+    $tel = isset($_POST['tel']) ? trim($_POST['tel']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
 }
 ?>
 <!DOCTYPE html>
