@@ -1,0 +1,104 @@
+    * {
+        box-sizing: border-box;
+    }
+    /* для телефонов */
+    
+    @media only screen and (max-width: 480px) {
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: antiquewhite;
+            margin: 0;
+            padding: 0;
+        }
+        img {
+            width: 100%;
+        }
+        html,
+        body {
+            /* Убирает прокрутку по горизонтале, для мобильной версии */
+            overflow-x: hidden;
+        }
+        footer a {
+            display: block;
+        }
+        div {
+            border: 1px solid black;
+            border-radius: 10px;
+            margin: 10px;
+            background-color: antiquewhite;
+            width: 95%;
+            height: 95vw;
+        }
+    }
+    /* для планшетов */
+    
+    @media (min-width: 481px) and (max-width:768px) {
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: antiquewhite;
+            margin: 0;
+            padding: 0;
+        }
+        img {
+            min-width: 120px;
+        }
+        header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+        }
+        footer a {
+            display: block;
+        }
+        div {
+            border: 1px solid black;
+            border-radius: 10px;
+            margin: 10px;
+            background-color: antiquewhite;
+            min-height: 200px;
+            min-width: 200px;
+        }
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            background-color: aliceblue;
+            justify-content: space-around;
+        }
+    }
+    /* For desktop */
+    
+    @media only screen and (min-width: 769px) {
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: antiquewhite;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+        }
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            background-color: aliceblue;
+            justify-content: space-around;
+        }
+        img {
+            min-width: 320px;
+        }
+        div {
+            border: 1px solid black;
+            border-radius: 10px;
+            margin: 10px;
+            background-color: antiquewhite;
+            min-height: 380px;
+            min-width: 380px;
+        }
+    }
