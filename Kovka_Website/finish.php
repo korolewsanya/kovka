@@ -2,6 +2,7 @@
 require_once '../security.php';
 security_headers();
 require_post();
+csrf_check();
 
 include '../db_connection.php';
 
