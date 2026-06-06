@@ -5,71 +5,85 @@ require_post();
 
 include '../db_connection.php';
 
-// Инициализация
+
+// Инициализация переменной успеха
 $success = false;
+$error_message = '';
+$izdelie = '';
+$prise = 0;
+$name = '';
+$tel = '';
+$email = '';
 
-// Проверяем наличие обязательных полей
-if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['name'], $_POST['tel'])) {
-    // Базовая очистка и приведение типов
-    $data = trim($_POST['data']);
-    $izdelie = trim($_POST['izdelie']);
-    $image = basename($_POST['image']);
-    // Удаляем недопустимые символы в имени файла
-    $image = preg_replace('/[^A-Za-z0-9._-]/', '', $image);
-    $dlina = isset($_POST['dlina']) ? trim($_POST['dlina']) : '';
-    $shirina = isset($_POST['shirina']) ? trim($_POST['shirina']) : '';
-    $visota = isset($_POST['visota']) ? trim($_POST['visota']) : '';
-    $prise = isset($_POST['prise']) ? (float)$_POST['prise'] : 0.0;
-    $name = trim($_POST['name']);
-    $tel = trim($_POST['tel']);
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-    $coment = isset($_POST['coment']) ? trim($_POST['coment']) : '';
-
-    // Валидация email (не обязательна, очистим если неверный)
-    if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $email = '';
-    }
-
-    // Подготовленный запрос — проверяем prepare()
-    $sql = "INSERT INTO `zakaz` 
-        (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conn->prepare($sql);
-    if ($stmt === false) {
-        error_log('DB prepare error: ' . $conn->error);
-        $success = false;
+// Проверка наличия всех необходимых полей через isset()
+if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'], 
+          $_POST['shirina'], $_POST['visota'], $_POST['prise'], 
+          $_POST['name'], $_POST['tel'], $_POST['email'], $_POST['coment'])) {
+    
+    $data = $_POST['data'];
+    $izdelie = $_POST['izdelie'];
+    
+    // basename() уже безопасен, добавим валидацию допустимых символов
+    $image_raw = basename($_POST['image']);
+    // Разрешаем только буквы, цифры, точки, дефисы и подчёркивания
+    if (preg_match('/^[a-zA-Z0-9._-]+$/', $image_raw)) {
+        $image = $image_raw;
     } else {
-        // Типы: 6 строк, 1 double, 4 строки => "ssssssdssss"
-        $bind = $stmt->bind_param(
-            "ssssssdssss",
-            $data, $izdelie, $image, $dlina, $shirina, $visota, $prise, $name, $tel, $email, $coment
-        );
-
-        if ($bind === false) {
-            error_log('DB bind_param error: ' . $stmt->error);
-            $success = false;
+        $image = '';
+        $error_message = 'Недопустимое имя файла';
+    }
+    
+    $dlina = $_POST['dlina'];
+    $shirina = $_POST['shirina'];
+    $visota = $_POST['visota'];
+    $prise = (float)$_POST['prise'];  // явное приведение к числу
+    $name = $_POST['name'];
+    $tel = $_POST['tel'];
+    $email = $_POST['email'];
+    $coment = $_POST['coment'];
+    
+    // Подготовка запроса с проверкой результата
+    $stmt = $conn->prepare("INSERT INTO `zakaz` 
+        (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    if ($stmt === false) {
+        // Логирование ошибки prepare (без вывода пользователю)
+        error_log("Ошибка prepare: " . $conn->error);
+        $error_message = 'Внутренняя ошибка сервера';
+    } else {
+        // Правильные типы: ssssss d ssss (6 строк, 1 double, 4 строки)
+        $stmt->bind_param("ssssssdssss", 
+            $data, $izdelie, $image, $dlina, $shirina, $visota, 
+            $prise, $name, $tel, $email, $coment);
+        
+        if ($stmt->execute()) {
+            $success = true;
         } else {
-            if ($stmt->execute() === false) {
-                error_log('DB execute error: ' . $stmt->error);
-                $success = false;
-            } else {
-                $success = true;
-            }
+            // Логирование ошибки выполнения
+            error_log("Ошибка execute: " . $stmt->error);
+            $error_message = 'Ошибка сохранения заказа';
         }
-
         $stmt->close();
     }
-
     $conn->close();
 } else {
-    $success = false;
-    $izdelie = isset($_POST['izdelie']) ? trim($_POST['izdelie']) : 'Неизвестное изделие';
-    $prise = isset($_POST['prise']) ? (float)$_POST['prise'] : 0.0;
-    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
-    $tel = isset($_POST['tel']) ? trim($_POST['tel']) : '';
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $error_message = 'Не все поля заполнены';
+    // Для отладки на локали (можно закомментировать)
+    error_log("Отсутствуют поля POST: " . print_r($_POST, true));
 }
+
+// Если произошла ошибка, но $success не установлен
+if (!$success && empty($error_message)) {
+    $error_message = 'Неизвестная ошибка';
+}
+
+// Используем полученные данные для вывода (если нужно)
+$izdelie = $izdelie ?? 'Неизвестное изделие';
+$prise = $prise ?? 0;
+$name = $name ?? '';
+$tel = $tel ?? '';
+$email = $email ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -123,6 +137,9 @@ if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['name'], $_
             <div class="message error-message">
                 <p>Не удалось сохранить заказ. Попробуйте ещё раз или свяжитесь с нами по телефону.</p>
                 <p>Приносим извинения за временные неудобства.</p>
+                <?php if (!empty($error_message) && defined('DEBUG') && DEBUG === true): ?>
+                    <p style="font-size:12px; color:#999;"><?= htmlspecialchars($error_message) ?></p>
+                <?php endif; ?>
             </div>
             <a href="javascript:history.back()" class="button">Вернуться назад</a>
         <?php endif; ?>
