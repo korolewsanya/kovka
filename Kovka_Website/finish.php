@@ -6,7 +6,6 @@ csrf_check();
 
 include '../db_connection.php';
 
-// Инициализация переменной успеха
 $success = false;
 $error_message = '';
 $izdelie = '';
@@ -15,23 +14,14 @@ $name = '';
 $tel = '';
 $email = '';
 
-// Проверка наличия всех необходимых полей
+// Проверка наличия всех необходимых полей (как в оригинале)
 if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'], 
           $_POST['shirina'], $_POST['visota'], $_POST['prise'], 
           $_POST['name'], $_POST['tel'])) {
     
     $data = $_POST['data'];
     $izdelie = $_POST['izdelie'];
-    
-    // Защита от path traversal (basename безопасен)
-    $image = basename($_POST['image']);
-    // Не фильтруем символы, так как могут быть русские буквы
-    // Простая проверка: не пустой и не содержит path traversal
-    if (empty($image) || strpos($image, '/') !== false || strpos($image, '\\') !== false) {
-        $image = '';
-        $error_message = 'Недопустимое имя файла';
-    }
-    
+    $image = $_POST['image'];  // НЕ МЕНЯЕМ, оставляем как пришло
     $dlina = $_POST['dlina'];
     $shirina = $_POST['shirina'];
     $visota = $_POST['visota'];
@@ -41,31 +31,19 @@ if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'],
     $email = $_POST['email'] ?? '';
     $coment = $_POST['coment'] ?? '';
     
-    // Валидация имени (русские и английские буквы, пробелы, дефисы)
-    $name = trim($name);
-    if (!preg_match('/^[a-zA-Zа-яА-ЯёЁ\s\-]{2,50}$/u', $name)) {
-        $error_message = 'Недопустимые символы в имени';
-    }
-    
-    // Валидация телефона (очистка и проверка)
-    $tel = preg_replace('/[^0-9+]/', '', $tel);
-    if (!preg_match('/^\+?[0-9]{10,15}$/', $tel)) {
-        $error_message = 'Неверный формат телефона';
-    }
-    
-    // Валидация email (если указан)
-    if (!empty($email)) {
-        $email = filter_var(trim($email), FILTER_VALIDATE_EMAIL);
-        if ($email === false) {
-            $error_message = 'Неверный формат email';
-        }
-    }
-    
-    // Очистка комментария
+    // ТОЛЬКО БАЗОВАЯ ЗАЩИТА (без сложных regex)
+    $name = strip_tags(trim($name));
+    $tel = strip_tags(trim($tel));
+    $email = strip_tags(trim($email));
     $coment = strip_tags(trim($coment));
-    $coment = substr($coment, 0, 500);
+    $izdelie = strip_tags($izdelie);
+    $image = basename($image);  // только basename для безопасности
     
-    // Если нет ошибок валидации
+    // Минимальная проверка: поля не пустые
+    if (empty($name) || empty($tel)) {
+        $error_message = 'Заполните имя и телефон';
+    }
+    
     if (empty($error_message)) {
         $stmt = $conn->prepare("INSERT INTO `zakaz` 
             (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
