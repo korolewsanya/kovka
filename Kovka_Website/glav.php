@@ -1,3 +1,7 @@
+<?php
+require_once '../security.php';
+security_headers();
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
