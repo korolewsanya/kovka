@@ -2,6 +2,8 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
+
+include "../db_connection.php";
 ?>
 <!DOCTYPE html>
 <html>
@@ -22,8 +24,6 @@ security_headers();
 <h2>Заказы</h2>
 <div class="tableFixHead">
 <?php
-include "../db_connection.php";
-
 $sql = "SELECT * FROM zakaz ORDER BY Id DESC";
 $result = $conn->query($sql);
 if ($result && $result->num_rows > 0) {
