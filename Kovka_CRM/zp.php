@@ -3,8 +3,13 @@ define('APP_START', true);
 require_once '../security.php';
 security_headers();
 
-if(isset($_POST["zp"])){
-    $zp = htmlentities($_POST["zp"]);
+// Обработка POST-запроса (если есть)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    
+    if(isset($_POST["zp"])){
+        $zp = strip_tags(trim($_POST["zp"]));
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -50,12 +55,13 @@ if(isset($_POST["zp"])){
                 $('#nachis').val($(this).find('td:eq(4)').text());
                 $('#poluch').val($(this).find('td:eq(5)').text());
             });
+            
+            // Устанавливаем текущую дату, если поле пустое
+            if (!$('#date').val()) {
+                $('#date').val(moment().format('YYYY-MM-DD HH:mm:ss'));
+            }
         });
-        var data = $('#date').val();
-        var shablon = /\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/s;
-        if(!shablon.test(data)) {
-            $('#date').val(moment().format('YYYY-MM-DD HH:mm:ss'));
-        }
+        
         $('div').animate({scrollTop:5000},'50');
     </script>
 </body>
