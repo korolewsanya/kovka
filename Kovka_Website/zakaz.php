@@ -20,21 +20,18 @@ $categories = [
 $category = $_GET['category'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
 
-// Проверка через белый список
 if (!isset($categories[$category]) || $id <= 0) {
     die('Некорректные параметры');
 }
 
 $cat = $categories[$category];
-$table = $cat['table']; // теперь точно безопасно, но для страховки экранируем
+$table = $cat['table'];
 $folder = $cat['folder'];
 
-// Дополнительная проверка: имя таблицы только из допустимых символов
 if (!preg_match('/^[a-z0-9_]+$/', $table)) {
     die('Неверное имя таблицы');
 }
 
-// Используем backticks для имени таблицы
 $stmt = $conn->prepare("SELECT izdelie, image, Dlina, Shirina, Visota, Prise FROM `$table` WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -47,13 +44,15 @@ $row = $result->fetch_assoc();
 
 $izdelie = $row['izdelie'];
 $image = $row['image'];
+
+// Только basename() без удаления русских букв
+$image = basename($image);
+
 $dlina = $row['Dlina'];
 $shirina = $row['Shirina'];
 $visota = $row['Visota'];
 $prise = $row['Prise'];
 
-// Защита от path traversal в имени файла
-$image = preg_replace('/[^a-zA-Z0-9._-]/', '', basename($image));
 $imageSrc = "../img/" . $image;
 
 date_default_timezone_set('Europe/Moscow');
@@ -70,7 +69,6 @@ $data = date("Y-m-d H:i:s");
 <body>
 <div class="container">
     <div class="order-grid">
-        <!-- Левая колонка: информация о товаре -->
         <div class="product-info">
             <div class="product-image">
                 <img src="<?= htmlspecialchars($imageSrc) ?>" alt="<?= htmlspecialchars($izdelie) ?>">
@@ -93,7 +91,6 @@ $data = date("Y-m-d H:i:s");
             <div class="price"><?= number_format($prise, 0, '.', ' ') ?> ₽</div>
         </div>
 
-        <!-- Правая колонка: форма заказа -->
         <div class="order-form">
             <h2 style="margin-bottom: 25px; color: #2c3e50;">Оформить заказ</h2>
             <form action="finish.php" method="POST">
