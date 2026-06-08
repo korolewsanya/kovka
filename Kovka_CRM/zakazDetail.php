@@ -2,7 +2,6 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
-csrf_token();
 
 // Получаем id заказа (0 – новый заказ)
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -42,7 +41,10 @@ if (!$isNew) {
 // Определение пути к изображению по названию изделия
 $imageUrl = '';
 if (!empty($image)) {
-    // Определяем категорию по названию изделия (аналогично public/izdelie.php)
+    // Очищаем имя файла от опасных символов
+    $safe_image = basename($image);
+    $safe_image = preg_replace('/[^a-zA-Zа-яА-ЯёЁ0-9._-]/u', '', $safe_image);
+    
     $folders = [
         'мангал' => 'Мангалы', 'лавочка' => 'Лавочки', 'козырек' => 'Навесы',
         'забор' => 'Заборы', 'ворота' => 'Ворота', 'оградк' => 'Оградки',
@@ -54,7 +56,7 @@ if (!empty($image)) {
     $search = mb_strtolower($izdelie);
     foreach ($folders as $keyword => $folder) {
         if (strpos($search, $keyword) !== false) {
-            $imageUrl = "../img/" . rawurlencode($image);
+            $imageUrl = "../img/" . $safe_image;
             $found = true;
             break;
         }
