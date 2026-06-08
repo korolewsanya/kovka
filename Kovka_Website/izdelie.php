@@ -1,5 +1,7 @@
 <?php
+require_once '../security.php';
 include "../db_connection.php";
+security_headers();
 
 // Получаем категорию из адресной строки (например, ?category=mangal)
 $category = $_GET['category'] ?? '';
@@ -46,8 +48,8 @@ if ($category === 'mangal') {
     die('Неверная категория');
 }
 
-// Формируем запрос: берём нужные поля из нужной таблицы
-$sql = "SELECT id, izdelie, image, Prise FROM `$table`";
+// ВАЖНО: экранируем имя таблицы для защиты от SQL-инъекций
+$sql = "SELECT id, izdelie, image, Prise FROM `" . $conn->real_escape_string($table) . "`";
 // Выполняем запрос к базе данных и сохраняем результат
 $result = $conn->query($sql);
 ?>
@@ -114,10 +116,10 @@ $result = $conn->query($sql);
             // Если в БД хранится полный путь, извлекаем только имя файла
             $imageFile = basename($imageFile);
             // Формируем путь к изображению
-            $imagePath = "../img/{$imageFile}"
+            $imagePath = "../img/{$imageFile}";
             ?>
             <div class="container4">
-                <a href="zakaz.php?category=<?= htmlspecialchars($category) ?>&id=<?= (int)$row['id'] ?>">
+                <a href="zakaz.php?category=<?= urlencode($category) ?>&id=<?= (int)$row['id'] ?>">
                     <div class="product-image">
                         <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($row['izdelie']) ?>">
                     </div>
