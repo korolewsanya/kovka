@@ -2,9 +2,14 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
-csrf_token();
-if(isset($_POST["rashod"])){
-    $rashod = htmlentities($_POST["rashod"]);
+
+// Обработка POST-запроса (если есть)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    
+    if(isset($_POST["rashod"])){
+        $rashod = strip_tags(trim($_POST["rashod"]));
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -53,12 +58,13 @@ if(isset($_POST["rashod"])){
                 $('#prise').val($(this).find('td:eq(6)').text());
                 $('#itogo').val($(this).find('td:eq(7)').text());
             });
+            
+            // Устанавливаем текущую дату, если поле пустое
+            if (!$('#date').val()) {
+                $('#date').val(moment().format('YYYY-MM-DD HH:mm:ss'));
+            }
         });
-        var data = $('#date').val();
-        var shablon = /\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/s;
-        if(!shablon.test(data)) {
-            $('#date').val(moment().format('YYYY-MM-DD HH:mm:ss'));
-        }
+        
         $('div').animate({scrollTop:5000},'50');
     </script>
 </body>
