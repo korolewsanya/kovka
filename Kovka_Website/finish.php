@@ -6,7 +6,6 @@ csrf_check();
 
 include '../db_connection.php';
 
-
 // Инициализация переменной успеха
 $success = false;
 $error_message = '';
@@ -16,20 +15,19 @@ $name = '';
 $tel = '';
 $email = '';
 
-// Проверка наличия всех необходимых полей через isset()
+// Проверка наличия всех необходимых полей
 if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'], 
           $_POST['shirina'], $_POST['visota'], $_POST['prise'], 
-          $_POST['name'], $_POST['tel'], $_POST['email'], $_POST['coment'])) {
+          $_POST['name'], $_POST['tel'])) {
     
     $data = $_POST['data'];
     $izdelie = $_POST['izdelie'];
     
-    // basename() уже безопасен, добавим валидацию допустимых символов
-    $image_raw = basename($_POST['image']);
-    // Разрешаем только буквы, цифры, точки, дефисы и подчёркивания
-    if (preg_match('/^[a-zA-Z0-9._-]+$/', $image_raw)) {
-        $image = $image_raw;
-    } else {
+    // Защита от path traversal (basename безопасен)
+    $image = basename($_POST['image']);
+    // Не фильтруем символы, так как могут быть русские буквы
+    // Простая проверка: не пустой и не содержит path traversal
+    if (empty($image) || strpos($image, '/') !== false || strpos($image, '\\') !== false) {
         $image = '';
         $error_message = 'Недопустимое имя файла';
     }
@@ -37,49 +35,69 @@ if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'],
     $dlina = $_POST['dlina'];
     $shirina = $_POST['shirina'];
     $visota = $_POST['visota'];
-    $prise = (float)$_POST['prise'];  // явное приведение к числу
+    $prise = (float)$_POST['prise'];
     $name = $_POST['name'];
     $tel = $_POST['tel'];
-    $email = $_POST['email'];
-    $coment = $_POST['coment'];
+    $email = $_POST['email'] ?? '';
+    $coment = $_POST['coment'] ?? '';
     
-    // Подготовка запроса с проверкой результата
-    $stmt = $conn->prepare("INSERT INTO `zakaz` 
-        (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // Валидация имени (русские и английские буквы, пробелы, дефисы)
+    $name = trim($name);
+    if (!preg_match('/^[a-zA-Zа-яА-ЯёЁ\s\-]{2,50}$/u', $name)) {
+        $error_message = 'Недопустимые символы в имени';
+    }
     
-    if ($stmt === false) {
-        // Логирование ошибки prepare (без вывода пользователю)
-        error_log("Ошибка prepare: " . $conn->error);
-        $error_message = 'Внутренняя ошибка сервера';
-    } else {
-        // Правильные типы: ssssss d ssss (6 строк, 1 double, 4 строки)
-        $stmt->bind_param("ssssssdssss", 
-            $data, $izdelie, $image, $dlina, $shirina, $visota, 
-            $prise, $name, $tel, $email, $coment);
-        
-        if ($stmt->execute()) {
-            $success = true;
-        } else {
-            // Логирование ошибки выполнения
-            error_log("Ошибка execute: " . $stmt->error);
-            $error_message = 'Ошибка сохранения заказа';
+    // Валидация телефона (очистка и проверка)
+    $tel = preg_replace('/[^0-9+]/', '', $tel);
+    if (!preg_match('/^\+?[0-9]{10,15}$/', $tel)) {
+        $error_message = 'Неверный формат телефона';
+    }
+    
+    // Валидация email (если указан)
+    if (!empty($email)) {
+        $email = filter_var(trim($email), FILTER_VALIDATE_EMAIL);
+        if ($email === false) {
+            $error_message = 'Неверный формат email';
         }
-        $stmt->close();
+    }
+    
+    // Очистка комментария
+    $coment = strip_tags(trim($coment));
+    $coment = substr($coment, 0, 500);
+    
+    // Если нет ошибок валидации
+    if (empty($error_message)) {
+        $stmt = $conn->prepare("INSERT INTO `zakaz` 
+            (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        if ($stmt === false) {
+            error_log("Ошибка prepare: " . $conn->error);
+            $error_message = 'Внутренняя ошибка сервера';
+        } else {
+            $stmt->bind_param("ssssssdssss", 
+                $data, $izdelie, $image, $dlina, $shirina, $visota, 
+                $prise, $name, $tel, $email, $coment);
+            
+            if ($stmt->execute()) {
+                $success = true;
+            } else {
+                error_log("Ошибка execute: " . $stmt->error);
+                $error_message = 'Ошибка сохранения заказа';
+            }
+            $stmt->close();
+        }
     }
     $conn->close();
 } else {
     $error_message = 'Не все поля заполнены';
-    // Для отладки на локали (можно закомментировать)
     error_log("Отсутствуют поля POST: " . print_r($_POST, true));
 }
 
-// Если произошла ошибка, но $success не установлен
 if (!$success && empty($error_message)) {
     $error_message = 'Неизвестная ошибка';
 }
 
-// Используем полученные данные для вывода (если нужно)
 $izdelie = $izdelie ?? 'Неизвестное изделие';
 $prise = $prise ?? 0;
 $name = $name ?? '';
@@ -135,7 +153,7 @@ $email = $email ?? '';
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             </div>
             <h1>Ошибка оформления</h1>
-            <div class="message error-message">
+            <div class="message">
                 <p>Не удалось сохранить заказ. Попробуйте ещё раз или свяжитесь с нами по телефону.</p>
                 <p>Приносим извинения за временные неудобства.</p>
                 <?php if (!empty($error_message) && defined('DEBUG') && DEBUG === true): ?>
