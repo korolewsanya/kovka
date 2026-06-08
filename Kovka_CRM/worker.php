@@ -2,12 +2,17 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
-csrf_token();
 
 include "../db_connection.php";
 
-// Определение роли из GET параметра
+// Определение роли из GET параметра с проверкой
 $role = isset($_GET['role']) ? $_GET['role'] : 'car';
+
+// Белый список допустимых ролей (защита от подмены)
+$allowed_roles = ['admin', 'car', 'color', 'diz', 'slesar', 'svar'];
+if (!in_array($role, $allowed_roles)) {
+    $role = 'car';
+}
 
 // Если роль admin - перенаправляем на admin.php
 if ($role === 'admin') {
@@ -24,11 +29,6 @@ $roles = [
     'svar' => ['title' => 'Сварщик', 'prof_value' => 'Сварщик']
 ];
 
-// Проверка существования роли
-if (!isset($roles[$role])) {
-    $role = 'car';
-}
-
 $current_role = $roles[$role];
 ?>
 <!DOCTYPE html>
@@ -38,7 +38,7 @@ $current_role = $roles[$role];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="admin2.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<title><?php echo $current_role['title']; ?></title>
+<title><?php echo htmlspecialchars($current_role['title']); ?></title>
 <style>
 .role-info {
     background: #4CAF50;
@@ -56,7 +56,7 @@ $current_role = $roles[$role];
 <body>
 
 <div class="role-info">
-    Вы вошли как: <?php echo $current_role['title']; ?>
+    Вы вошли как: <?php echo htmlspecialchars($current_role['title']); ?>
 </div>
 
 <div class="tableFixHead">
@@ -88,11 +88,7 @@ if ($userid) {
             </thead>
             <tbody>";
         while ($row = $res->fetch_assoc()) {
-            $class_work = $row['class_work'];
-            $prof = $row['prof'];
-            $name = $row['name'];
-            $cod = $row['cod'];
-            echo "<tr data-id='{$row['id']}' data-class_work='" . htmlspecialchars($class_work) . "' data-prof='" . htmlspecialchars($prof) . "' data-name='" . htmlspecialchars($name) . "' data-cod='" . htmlspecialchars($cod) . "'
+            echo "<tr data-id='{$row['id']}' data-class_work='" . htmlspecialchars($row['class_work']) . "' data-prof='" . htmlspecialchars($row['prof']) . "' data-name='" . htmlspecialchars($row['name']) . "' data-cod='" . htmlspecialchars($row['cod']) . "'
                        data-tz='" . htmlspecialchars($row['tz']) . "' data-otchet='" . htmlspecialchars($row['otchet']) . "'>";
             echo "<td>" . htmlspecialchars($row['id']) . "</td>";
             echo "<td>" . htmlspecialchars($row['date']) . "</td>";
@@ -123,10 +119,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
         $tz         = $_POST['tz'] ?? '';
         $otchet     = $_POST['otchet'] ?? '';
         $cod        = $_POST['cod'] ?? '';
+        
+        // Валидация: очистка от HTML-тегов
+        $tz = strip_tags($tz);
+        $otchet = strip_tags($otchet);
+        $name = strip_tags($name);
+        
         $stmt = $conn->prepare("INSERT INTO otchet (class_work, prof, name, tz, otchet, date, cod) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssss", $class_work, $prof, $name, $tz, $otchet, $date, $cod);
         if ($stmt->execute()) {
-            echo "<script>window.location.href = 'worker.php?role=" . $role . "';</script>";
+            echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
         } else {
             echo "Ошибка добавления: " . $stmt->error;
         }
@@ -142,16 +144,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
             $tz         = $_POST['tz'] ?? '';
             $otchet     = $_POST['otchet'] ?? '';
             $cod        = $_POST['cod'] ?? '';
+            
+            // Валидация: очистка от HTML-тегов
+            $tz = strip_tags($tz);
+            $otchet = strip_tags($otchet);
+            $name = strip_tags($name);
+            
             $stmt = $conn->prepare("UPDATE otchet SET class_work=?, prof=?, name=?, tz=?, otchet=?, cod=? WHERE id=?");
             $stmt->bind_param("ssssssi", $class_work, $prof, $name, $tz, $otchet, $cod, $id);
             if ($stmt->execute()) {
-                echo "<script>window.location.href = 'worker.php?role=" . $role . "';</script>";
+                echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
             } else {
                 echo "Ошибка изменения: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            echo "<script>alert('Выберите отчёт для изменения'); window.location.href='worker.php?role=" . $role . "';</script>";
+            echo "<script>alert('Выберите отчёт для изменения'); window.location.href='worker.php?role=" . htmlspecialchars($role) . "';</script>";
         }
     }
 
@@ -161,13 +169,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
             $stmt = $conn->prepare("DELETE FROM otchet WHERE id=?");
             $stmt->bind_param("i", $id);
             if ($stmt->execute()) {
-                echo "<script>window.location.href = 'worker.php?role=" . $role . "';</script>";
+                echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
             } else {
                 echo "Ошибка удаления: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            echo "<script>alert('Выберите отчёт для удаления'); window.location.href='worker.php?role=" . $role . "';</script>";
+            echo "<script>alert('Выберите отчёт для удаления'); window.location.href='worker.php?role=" . htmlspecialchars($role) . "';</script>";
         }
     }
     $conn->close();
@@ -184,9 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
         <input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>">
         <input type="hidden" id="id" name="id" value="0">
         <input type="hidden" id="cod" name="cod" readonly value="<?php echo htmlspecialchars($userid ?? ''); ?>">
-        <input type="hidden" id="class_work" name="class_work" value="<?php echo htmlspecialchars($class_work ?? ''); ?>">
-        <input type="text" id="prof" name="prof" value="<?php echo htmlspecialchars($prof ?? $current_role['prof_value']); ?>">
-        <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($name ?? ''); ?>">
+        <input type="hidden" id="class_work" name="class_work" value="">
+        <input type="text" id="prof" name="prof" value="<?php echo htmlspecialchars($current_role['prof_value']); ?>">
+        <input type="text" id="name" name="name" value="">
         <textarea id="tz" name="tz" cols="40" rows="4" placeholder="Тех.задание"></textarea>
         <textarea id="otchet" name="otchet" cols="40" rows="4" placeholder="Отчёт"></textarea>
         <input type="submit" name="Save" value=" Добавить ">
@@ -255,7 +263,7 @@ if (isset($_FILES['file'])) {
         make_upload($_FILES['file']);
         echo "<strong>Файл успешно загружен!</strong>";
     } else {
-        echo "<strong>$check</strong>";
+        echo "<strong>" . htmlspecialchars($check) . "</strong>";
     }
 }
 $conn->close();
