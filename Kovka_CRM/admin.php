@@ -1,3 +1,11 @@
+<?php
+define('APP_START', true);
+require_once '../security.php';
+security_headers();
+
+// Подключение к БД (перенёс в начало, как и должно быть)
+include "../db_connection.php";
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -62,12 +70,6 @@
 </head>
 
 <body>
-<?php
-define('APP_START', true);
-require_once '../security.php';
-security_headers();
-
-?>
 <br>
 <div class="form_row">
     <a href="zakaz.php" target="_blank" rel="noopener noreferrer" class="admin-btn">Заказы</a>
@@ -91,8 +93,6 @@ security_headers();
 <h2>Заказы</h2>
 <div class="tableFixHead">
 <?php
-include "../db_connection.php";
-
 $sql = "SELECT * FROM cod";
 if($result = $conn->query($sql)){
     while($row = $result->fetch_array()){
@@ -112,7 +112,7 @@ if($result = $conn->query($sql)) {
                 <th style='border:1px solid black; padding-left:5px'>Оплата</th>
                 <th style='border:1px solid black; padding-left:5px'>Процесс выполнения</th>
                 <th style='border:1px solid black; padding-left:5px'>Процесс выполнения</th>
-            </tr>
+             </tr>
         </thead>";
     foreach($result as $row){
         echo "<tbody style='border:1px solid black; border-collapse:collapse'>";
@@ -137,7 +137,6 @@ if($result = $conn->query($sql)) {
 <?php
 $sql = "SELECT * FROM otchet";
 if($result = $conn->query($sql)) {
-    // Добавлен класс otchet-table
     echo "<table class='otchet-table' style='border:1px solid black; border-collapse:collapse; position:sticky; max-height:400px;'>
         <thead style='border:1px solid black'>
             <tr style='border:1px solid black'>
@@ -148,17 +147,14 @@ if($result = $conn->query($sql)) {
                 <th style='border:1px solid black; padding-left:5px'>Отчёт</th>
                 <th style='border:1px solid black; padding-left:5px'>Код</th>
                 <th style='border:1px solid black; padding-left:5px'>Классификация</th>
-            </tr>
+             </tr>
         </thead>";
     foreach($result as $row){
-        // Получаем имя изображения, если поле image существует
         $image = isset($row['image']) ? $row['image'] : '';
         $imageUrl = '';
         if (!empty($image)) {
-            // Полный путь к файлу (пробелы допустимы в HTML, браузер сам их закодирует)
             $imageUrl = '/Kovka_new/img/' . $image;
         }
-        // Добавляем data-image-url к строке
         echo "<tbody style='border:1px solid black; border-collapse:collapse'>";
         echo "<tr style='border:1px solid black' data-image-url='" . htmlspecialchars($imageUrl) . "'>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["id"]) . "</td>";
@@ -168,7 +164,7 @@ if($result = $conn->query($sql)) {
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["otchet"]) . "</td>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["cod"]) . "</td>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["class_work"]) . "</td>";
-        echo "</td>";
+        echo "</tr>";
         echo "</tbody>";
     }
     echo "</table>";
@@ -178,7 +174,7 @@ if($result = $conn->query($sql)) {
 
 <p>Для отправки тех.задания выберите специалиста</p>
 
-<!-- Новая форма с вертикальным расположением (добавлены кнопки Изменить, Удалить и скрытое поле report_id) -->
+<!-- Новая форма с вертикальным расположением -->
 <div style="margin-top: 10px;">
     <form method="POST" style="display: block;">
         <?php echo csrf_token_field(); ?>
@@ -209,8 +205,6 @@ if($result = $conn->query($sql)) {
             </select>
         </div>
 
-        <!-- Поля ввода (вертикально) -->
-        <!-- Скрытое поле для ID отчёта (при выборе строки) -->
         <input type="hidden" id="report_id" name="report_id" value="0">
         <div style="margin-bottom: 10px;">
             <input type="hidden" id="cod" name="cod" readonly style="color:black;" size="7" placeholder="Код доступа">
@@ -238,48 +232,56 @@ if($result = $conn->query($sql)) {
 date_default_timezone_set('Europe/Moscow');
 $current_date = date('Y-m-d H:i:s');
 
-// Обработка добавления
+// Обработка добавления - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
 if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"]) && 
     isset($_POST["prof"]) && isset($_POST["name"]) && isset($_POST["tz"])) {
     csrf_check();
 
-    $cod = $conn->real_escape_string($_POST["cod"]);
-    $class_work = $conn->real_escape_string($_POST["class_work"]);
-    $prof = $conn->real_escape_string($_POST["prof"]);
-    $name = $conn->real_escape_string($_POST["name"]);
-    $tz = $conn->real_escape_string($_POST["tz"]);
+    $cod = $_POST["cod"];
+    $class_work = $_POST["class_work"];
+    $prof = $_POST["prof"];
+    $name = $_POST["name"];
+    $tz = $_POST["tz"];
 
-    $sql = "INSERT INTO otchet (cod, class_work, prof, name, tz, date) VALUES ('$cod', '$class_work', '$prof', '$name', '$tz', '$current_date')";
-    if($conn->query($sql)){
+    $stmt = $conn->prepare("INSERT INTO otchet (cod, class_work, prof, name, tz, date) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssss", $cod, $class_work, $prof, $name, $tz, $current_date);
+    if($stmt->execute()){
         echo "<script>window.location.href = 'admin.php';</script>";
     } else{
-        echo "Ошибка добавления: " . $conn->error;
+        echo "Ошибка добавления: " . $stmt->error;
     }
+    $stmt->close();
 }
 
-// Обработка изменения (обновляем только тех.задание, можно дополнить другими полями)
+// Обработка изменения - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
 if (isset($_POST["edit"]) && isset($_POST["report_id"]) && $_POST["report_id"] > 0) {
     csrf_check();
     $id = (int)$_POST["report_id"];
-    $tz = $conn->real_escape_string($_POST["tz"]);
-    $sql = "UPDATE otchet SET tz='$tz' WHERE id=$id";
-    if($conn->query($sql)){
+    $tz = $_POST["tz"];
+    
+    $stmt = $conn->prepare("UPDATE otchet SET tz=? WHERE id=?");
+    $stmt->bind_param("si", $tz, $id);
+    if($stmt->execute()){
         echo "<script>window.location.href = 'admin.php';</script>";
     } else{
-        echo "Ошибка изменения: " . $conn->error;
+        echo "Ошибка изменения: " . $stmt->error;
     }
+    $stmt->close();
 }
 
-// Обработка удаления
+// Обработка удаления - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
 if (isset($_POST["delete"]) && isset($_POST["report_id"]) && $_POST["report_id"] > 0) {
     csrf_check();
     $id = (int)$_POST["report_id"];
-    $sql = "DELETE FROM otchet WHERE id=$id";
-    if($conn->query($sql)){
+    
+    $stmt = $conn->prepare("DELETE FROM otchet WHERE id=?");
+    $stmt->bind_param("i", $id);
+    if($stmt->execute()){
         echo "<script>window.location.href = 'admin.php';</script>";
     } else{
-        echo "Ошибка удаления: " . $conn->error;
+        echo "Ошибка удаления: " . $stmt->error;
     }
+    $stmt->close();
 }
 
 // Обработка загрузки файла
