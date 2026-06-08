@@ -19,31 +19,43 @@ $categories = [
 
 $category = $_GET['category'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
+
+// Проверка через белый список
 if (!isset($categories[$category]) || $id <= 0) {
     die('Некорректные параметры');
 }
 
 $cat = $categories[$category];
-$table = $cat['table'];
+$table = $cat['table']; // теперь точно безопасно, но для страховки экранируем
 $folder = $cat['folder'];
 
+// Дополнительная проверка: имя таблицы только из допустимых символов
+if (!preg_match('/^[a-z0-9_]+$/', $table)) {
+    die('Неверное имя таблицы');
+}
+
+// Используем backticks для имени таблицы
 $stmt = $conn->prepare("SELECT izdelie, image, Dlina, Shirina, Visota, Prise FROM `$table` WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
+
 if ($result->num_rows === 0) {
     die('Товар не найден');
 }
 $row = $result->fetch_assoc();
 
 $izdelie = $row['izdelie'];
-$image = $row['image'];          // только имя файла
+$image = $row['image'];
 $dlina = $row['Dlina'];
 $shirina = $row['Shirina'];
 $visota = $row['Visota'];
 $prise = $row['Prise'];
 
+// Защита от path traversal в имени файла
+$image = preg_replace('/[^a-zA-Z0-9._-]/', '', basename($image));
 $imageSrc = "../img/" . $image;
+
 date_default_timezone_set('Europe/Moscow');
 $data = date("Y-m-d H:i:s");
 ?>
@@ -54,7 +66,6 @@ $data = date("Y-m-d H:i:s");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="zakaz.css">
     <title>Заказ | <?= htmlspecialchars($izdelie) ?></title>
-
 </head>
 <body>
 <div class="container">
@@ -93,7 +104,7 @@ $data = date("Y-m-d H:i:s");
                 </div>
                 <div class="form-group">
                     <label>Телефон *</label>
-                    <input type="tel" name="tel" placeholder="+7 (904) 508-17-52" pattern="\+?[0-9\s\-\(\)]+" required>
+                    <input type="tel" name="tel" placeholder="+7 (904) 508-17-52" required>
                 </div>
                 <div class="form-group">
                     <label>Email</label>
