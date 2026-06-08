@@ -27,6 +27,15 @@ if (isset($_POST['Save'])) {
     $tel     = $_POST['tel'] ?? '';
     $email   = $_POST['email'] ?? '';
     $coment  = $_POST['coment'] ?? '';
+    
+    // Защита от XSS в текстовых полях
+    $izdelie = strip_tags($izdelie);
+    $proces = strip_tags($proces);
+    $name = strip_tags($name);
+    $coment = strip_tags($coment);
+    
+    // Защита имени файла от path traversal
+    $image = basename($image);
 
     $stmt = $conn->prepare("INSERT INTO zakaz (date, izdelie, image, Dlina, Shirina, Visota, Prise, Pay, Proces, Name, Tel, Email, Coment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssssddsssss", $date, $izdelie, $image, $dlina, $shirina, $visota, $prise, $pay, $proces, $name, $tel, $email, $coment);
@@ -54,6 +63,15 @@ if (isset($_POST['Change'])) {
         $tel     = $_POST['tel'] ?? '';
         $email   = $_POST['email'] ?? '';
         $coment  = $_POST['coment'] ?? '';
+        
+        // Защита от XSS в текстовых полях
+        $izdelie = strip_tags($izdelie);
+        $proces = strip_tags($proces);
+        $name = strip_tags($name);
+        $coment = strip_tags($coment);
+        
+        // Защита имени файла от path traversal
+        $image = basename($image);
 
         $stmt = $conn->prepare("UPDATE zakaz SET date=?, izdelie=?, image=?, Dlina=?, Shirina=?, Visota=?, Prise=?, Pay=?, Proces=?, Name=?, Tel=?, Email=?, Coment=? WHERE Id=?");
         $stmt->bind_param("ssssssddsssssi", $date, $izdelie, $image, $dlina, $shirina, $visota, $prise, $pay, $proces, $name, $tel, $email, $coment, $id);
