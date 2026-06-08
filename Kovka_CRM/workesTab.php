@@ -1,4 +1,7 @@
 <?php
+if (!function_exists('csrf_check')) {
+    require_once '../security.php';
+}
 include "../db_connection.php";
 
 // ---- ВЫВОД ТАБЛИЦЫ (с экранированием) ----
@@ -25,43 +28,46 @@ if ($result = $conn->query($sql)) {
 
 // ---- ОБРАБОТКА POST (один блок) ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check();  // проверяем токен
+    csrf_check();
 
     if (isset($_POST['Save'])) {
-        $spec  = $_POST['spec'] ?? '';
-        $name  = $_POST['name'] ?? '';
-        $tel   = $_POST['tel'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $adres = $_POST['adres'] ?? '';
-        $data  = $_POST['data'] ?? '';
-        $proch = $_POST['proch'] ?? '';
+        // Защита от XSS
+        $spec  = strip_tags($_POST['spec'] ?? '');
+        $name  = strip_tags($_POST['name'] ?? '');
+        $tel   = strip_tags($_POST['tel'] ?? '');
+        $email = strip_tags($_POST['email'] ?? '');
+        $adres = strip_tags($_POST['adres'] ?? '');
+        $data  = strip_tags($_POST['data'] ?? '');
+        $proch = strip_tags($_POST['proch'] ?? '');
         
         $stmt = $conn->prepare("INSERT INTO workes (spec, name, tel, email, adres, data, proch) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssss", $spec, $name, $tel, $email, $adres, $data, $proch);
         if ($stmt->execute()) {
             echo "<script>window.location.href = 'workes.php';</script>";
         } else {
-            echo "Ошибка: " . $stmt->error;
+            echo "Ошибка: " . htmlspecialchars($stmt->error);
         }
         $stmt->close();
     }
 
     if (isset($_POST['Change'])) {
         $id = (int)($_POST['id'] ?? 0);
-        $spec  = $_POST['spec'] ?? '';
-        $name  = $_POST['name'] ?? '';
-        $tel   = $_POST['tel'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $adres = $_POST['adres'] ?? '';
-        $data  = $_POST['data'] ?? '';
-        $proch = $_POST['proch'] ?? '';
+        // Защита от XSS
+        $spec  = strip_tags($_POST['spec'] ?? '');
+        $name  = strip_tags($_POST['name'] ?? '');
+        $tel   = strip_tags($_POST['tel'] ?? '');
+        $email = strip_tags($_POST['email'] ?? '');
+        $adres = strip_tags($_POST['adres'] ?? '');
+        $data  = strip_tags($_POST['data'] ?? '');
+        $proch = strip_tags($_POST['proch'] ?? '');
+        
         if ($id > 0) {
             $stmt = $conn->prepare("UPDATE workes SET spec=?, name=?, tel=?, email=?, adres=?, data=?, proch=? WHERE id=?");
             $stmt->bind_param("sssssssi", $spec, $name, $tel, $email, $adres, $data, $proch, $id);
             if ($stmt->execute()) {
                 echo "<script>window.location.href = 'workes.php';</script>";
             } else {
-                echo "Ошибка: " . $stmt->error;
+                echo "Ошибка: " . htmlspecialchars($stmt->error);
             }
             $stmt->close();
         }
@@ -75,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 echo "<script>window.location.href = 'workes.php';</script>";
             } else {
-                echo "Ошибка: " . $stmt->error;
+                echo "Ошибка: " . htmlspecialchars($stmt->error);
             }
             $stmt->close();
         }
