@@ -5,6 +5,9 @@ security_headers();
 
 include "../db_connection.php";
 
+//Ссылка на выход
+echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
+
 // Определение роли из GET параметра с проверкой
 $role = isset($_GET['role']) ? $_GET['role'] : 'car';
 
