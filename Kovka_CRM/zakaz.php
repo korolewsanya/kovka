@@ -2,7 +2,7 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
-
+require_once 'auth_check.php';
 include "../db_connection.php";
 ?>
 <!DOCTYPE html>

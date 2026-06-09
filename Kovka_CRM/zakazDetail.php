@@ -1,6 +1,7 @@
 <?php
 define('APP_START', true);
 require_once '../security.php';
+require_once 'auth_check.php';
 security_headers();
 
 // Получаем id заказа (0 – новый заказ)
