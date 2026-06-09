@@ -5,6 +5,10 @@ security_headers();
 
 // Подключение к БД (перенёс в начало, как и должно быть)
 include "../db_connection.php";
+
+//Ссылка на выход
+echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
+
 ?>
 <!DOCTYPE html>
 <html>

@@ -2,6 +2,9 @@
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
+
+//Ссылка на выход
+echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
