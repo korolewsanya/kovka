@@ -1,6 +1,7 @@
 <?php
 define('APP_START', true);
 require_once '../security.php';
+require_once 'auth_check.php';
 security_headers();
 
 include "../db_connection.php";
@@ -8,8 +9,8 @@ include "../db_connection.php";
 //Ссылка на выход
 echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
 
-// Определение роли из GET параметра с проверкой
-$role = isset($_GET['role']) ? $_GET['role'] : 'car';
+// ===== ИСПРАВЛЕНО: берём роль ИЗ СЕССИИ, а не из GET =====
+$role = $_SESSION['user_role'] ?? 'car';
 
 // Белый список допустимых ролей (защита от подмены)
 $allowed_roles = ['admin', 'car', 'color', 'diz', 'slesar', 'svar'];
@@ -123,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
         $otchet     = $_POST['otchet'] ?? '';
         $cod        = $_POST['cod'] ?? '';
         
-        // Валидация: очистка от HTML-тегов
         $tz = strip_tags($tz);
         $otchet = strip_tags($otchet);
         $name = strip_tags($name);
@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
         $stmt = $conn->prepare("INSERT INTO otchet (class_work, prof, name, tz, otchet, date, cod) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssss", $class_work, $prof, $name, $tz, $otchet, $date, $cod);
         if ($stmt->execute()) {
-            echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
+            echo "<script>window.location.href = 'worker.php';</script>";
         } else {
             echo "Ошибка добавления: " . $stmt->error;
         }
@@ -148,7 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
             $otchet     = $_POST['otchet'] ?? '';
             $cod        = $_POST['cod'] ?? '';
             
-            // Валидация: очистка от HTML-тегов
             $tz = strip_tags($tz);
             $otchet = strip_tags($otchet);
             $name = strip_tags($name);
@@ -156,13 +155,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
             $stmt = $conn->prepare("UPDATE otchet SET class_work=?, prof=?, name=?, tz=?, otchet=?, cod=? WHERE id=?");
             $stmt->bind_param("ssssssi", $class_work, $prof, $name, $tz, $otchet, $cod, $id);
             if ($stmt->execute()) {
-                echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
+                echo "<script>window.location.href = 'worker.php';</script>";
             } else {
                 echo "Ошибка изменения: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            echo "<script>alert('Выберите отчёт для изменения'); window.location.href='worker.php?role=" . htmlspecialchars($role) . "';</script>";
+            echo "<script>alert('Выберите отчёт для изменения'); window.location.href='worker.php';</script>";
         }
     }
 
@@ -172,13 +171,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
             $stmt = $conn->prepare("DELETE FROM otchet WHERE id=?");
             $stmt->bind_param("i", $id);
             if ($stmt->execute()) {
-                echo "<script>window.location.href = 'worker.php?role=" . htmlspecialchars($role) . "';</script>";
+                echo "<script>window.location.href = 'worker.php';</script>";
             } else {
                 echo "Ошибка удаления: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            echo "<script>alert('Выберите отчёт для удаления'); window.location.href='worker.php?role=" . htmlspecialchars($role) . "';</script>";
+            echo "<script>alert('Выберите отчёт для удаления'); window.location.href='worker.php';</script>";
         }
     }
     $conn->close();
@@ -192,7 +191,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
 <div class="div2">
     <form method="POST">
         <?php echo csrf_token_field(); ?>
-        <input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>">
         <input type="hidden" id="id" name="id" value="0">
         <input type="hidden" id="cod" name="cod" readonly value="<?php echo htmlspecialchars($userid ?? ''); ?>">
         <input type="hidden" id="class_work" name="class_work" value="">
@@ -236,7 +234,7 @@ if ($result && $result->num_rows > 0) {
             </tr>
         </tbody>";
     }
-    echo "</table>";
+    echo "<table>";
 } else {
     echo "<p>Нет заказов.</p>";
 }
@@ -251,7 +249,6 @@ if ($result && $result->num_rows > 0) {
     
     <form method="post" enctype="multipart/form-data" style="display: inline-block; margin-left: 10px;">
         <?php echo csrf_token_field(); ?>
-        <input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>">
         <input type="file" name="file">
         <input type="submit" value="Загрузить файл!">
     </form>
@@ -289,7 +286,6 @@ $(function() {
     });
 });
 
-// Клик по строке таблицы заказов – переход на страницу редактирования
 $(function() {
     $('.clickable-row').click(function() {
         var id = $(this).data('id');

@@ -1,6 +1,8 @@
 <?php
 define('APP_START', true);
 require_once '../security.php';
+require_once 'auth_check.php';  // проверка авторизации
+check_role('admin');            // проверка, что это именно admin
 security_headers();
 
 // Подключение к БД (перенёс в начало, как и должно быть)
