@@ -1,7 +1,8 @@
 <?php
 include "../db_connection.php";
+require_once 'auth_check.php';
 
-// ---- ВЫВОД ТАБЛИЦЫ (с экранированием) ----
+// ВЫВОД ТАБЛИЦЫ (с экранированием)
 $sql = "SELECT * FROM dostup";
 if ($result = $conn->query($sql)) {
     echo "<table style='border:1px solid black; border-collapse:collapse; position:sticky; max-height:400px;'>
