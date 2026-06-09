@@ -1,6 +1,7 @@
 <?php
 if (!function_exists('csrf_check')) {
-    require_once __DIR__ . '/../Ковка_сайт/config/security.php';
+    require_once '../security.php';
+    require_once 'auth_check.php';
 }
 include "../db_connection.php";
 
