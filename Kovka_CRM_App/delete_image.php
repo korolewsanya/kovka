@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $filename = $_POST['filename'] ?? '';
-$filepath = 'uploads/' . $filename;
+$filepath = '../img/' . $filename;
 
 if (file_exists($filepath)) {
     if (unlink($filepath)) {

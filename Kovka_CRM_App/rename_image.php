@@ -14,8 +14,8 @@ if (!in_array(strtolower($ext), $allowedExtensions)) {
     exit;
 }
 
-$oldPath = 'uploads/' . $oldName;
-$newPath = 'uploads/' . $newName;
+$oldPath = '../img/' . $oldName;
+$newPath = '../img/' . $newName;
 
 if (file_exists($oldPath)) {
     if (rename($oldPath, $newPath)) {
