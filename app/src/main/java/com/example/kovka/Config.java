@@ -5,7 +5,7 @@ public class Config {
     private static final String BASE_URL = "http://192.168.1.156/Kovka_git/kovka/";
 
     // Составные пути
-    public static final String API_BASE = BASE_URL + "Kovka_CRM_App/";
+    public static final String API_BASE = BASE_URL + "Kovka_CRM_Api/";
     public static final String IMG_BASE = BASE_URL + "img/";
 
     // Пути для создания, замены, удаленя
