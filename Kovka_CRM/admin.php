@@ -5,7 +5,7 @@ require_once 'auth_check.php';  // проверка авторизации
 check_role('admin');            // проверка, что это именно admin
 security_headers();
 
-// Подключение к БД (перенёс в начало, как и должно быть)
+// Подключение к БД
 include "../db_connection.php";
 
 //Ссылка на выход
@@ -96,6 +96,9 @@ echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
     </form>
 </div>
 <br>
+<p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
+<a href="reset.php">🔄 Сбросить демо-данные</a>
+
 <h2>Заказы</h2>
 <div class="tableFixHead">
 <?php

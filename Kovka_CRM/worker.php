@@ -63,6 +63,11 @@ $current_role = $roles[$role];
     Вы вошли как: <?php echo htmlspecialchars($current_role['title']); ?>
 </div>
 
+<p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
+<a href="reset.php">🔄 Сбросить демо-данные</a>
+<br>
+<br>
+
 <div class="tableFixHead">
 
 <?php
