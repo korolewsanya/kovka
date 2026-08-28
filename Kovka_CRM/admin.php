@@ -96,8 +96,8 @@ echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
     </form>
 </div>
 <br>
-<p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
-<a href="reset.php">🔄 Сбросить демо-данные</a>
+<!-- <p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
+<a href="reset.php">🔄 Сбросить демо-данные</a> -->
 
 <h2>Заказы</h2>
 <div class="tableFixHead">
