@@ -19,6 +19,7 @@ echo '<a href="logout.php" style="float: right; margin: 10px; color: red; font-w
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="admin2.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="admin.js"></script> <!-- Подключение внешнего JS файла -->
 <title>Админ</title>
 </head>
 
@@ -130,7 +131,7 @@ if($result = $conn->query($sql)) {
 
 <p>Для отправки тех.задания выберите специалиста</p>
 
-<!-- Новая форма с вертикальным расположением -->
+<!-- форма с вертикальным расположением -->
 <div style="margin-top: 10px;">
     <form method="POST" style="display: block;">
         <?php echo csrf_token_field(); ?>
@@ -188,7 +189,7 @@ if($result = $conn->query($sql)) {
 date_default_timezone_set('Europe/Moscow');
 $current_date = date('Y-m-d H:i:s');
 
-// Обработка добавления - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
+// Обработка добавления
 if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"]) && 
     isset($_POST["prof"]) && isset($_POST["name"]) && isset($_POST["tz"])) {
     csrf_check();
@@ -209,7 +210,7 @@ if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"])
     $stmt->close();
 }
 
-// Обработка изменения - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
+// Обработка изменения
 if (isset($_POST["edit"]) && isset($_POST["report_id"]) && $_POST["report_id"] > 0) {
     csrf_check();
     $id = (int)$_POST["report_id"];
@@ -225,7 +226,7 @@ if (isset($_POST["edit"]) && isset($_POST["report_id"]) && $_POST["report_id"] >
     $stmt->close();
 }
 
-// Обработка удаления - ТОЛЬКО БЕЗОПАСНОСТЬ (подготовленный запрос)
+// Обработка удаления
 if (isset($_POST["delete"]) && isset($_POST["report_id"]) && $_POST["report_id"] > 0) {
     csrf_check();
     $id = (int)$_POST["report_id"];
@@ -262,76 +263,5 @@ if (isset($_FILES['file'])) {
   <img class="modal-content" id="modalImage" src="" alt="Изображение отчёта">
 </div>
 
-<script>
-// Прокрутка таблицы вниз
-$('div').animate({scrollTop:5000},'50');
-
-// Вставка в поля ввода из таблицы (клик по строке) – работает для всех таблиц
-$(function() {
-    $('tr').click(function() {
-        var report_id = $(this).find("td:eq(0)").text();   // № отчёта
-        var prof = $(this).find('td:eq(1)').text();
-        var name = $(this).find('td:eq(2)').text();
-        var tz = $(this).find('td:eq(3)').text();
-        var cod = $(this).find("td:eq(5)").text();
-        var class_work = $(this).find("td:eq(6)").text();
-
-        $('#report_id').val(report_id);
-        $('#cod').val(cod);
-        $('#class_work').val(class_work);
-        $('#prof').val(prof);
-        $('#name').val(name);
-        $('#tz').val(tz);
-    });
-});
-
-// Выпадающий список заполняет поля формы и сбрасывает report_id
-$(function() {
-    $('#specialist_select').change(function() {
-        var $option = $(this).find('option:selected');
-        if ($option.val() !== "") {
-            $('#cod').val($option.data('cod'));
-            $('#class_work').val($option.data('class_work'));
-            $('#prof').val($option.data('prof'));
-            $('#name').val($option.data('name'));
-            $('#report_id').val('0');   // сброс ID, чтобы не путать с отчётом
-        } else {
-            $('#cod').val('');
-            $('#class_work').val('');
-            $('#prof').val('');
-            $('#name').val('');
-            $('#report_id').val('0');
-        }
-    });
-});
-
-// Скрываем 6 и 7 столбцы (код и классификация)
-$('td:nth-child(6),th:nth-child(6)').hide();
-$('td:nth-child(7),th:nth-child(7)').hide();
-
-// просмотр изображения по клику на строку таблицы otchet
-$(function() {
-    // Клик по строкам таблицы otchet (tbody tr)
-    $('table.otchet-table tbody tr').click(function(e) {
-        var imageUrl = $(this).data('image-url');
-        if (imageUrl) {
-            $('#modalImage').attr('src', imageUrl);
-            $('#imageModal').show();
-        }
-    });
-
-    // Закрытие модального окна по крестику
-    $('#imageModal .close').click(function() {
-        $('#imageModal').hide();
-    });
-
-    // Закрытие по клику на затемнённый фон (не на изображение)
-    $(window).click(function(event) {
-        if ($(event.target).is('#imageModal')) {
-            $('#imageModal').hide();
-        }
-    });
-});
-</script>
 </body>
 </html>
