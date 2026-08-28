@@ -9,7 +9,7 @@ security_headers();
 include "../db_connection.php";
 
 //Ссылка на выход
-echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
+echo '<a href="logout.php" style="float: right; margin: 10px; color: red; font-weight: bold;">Выйти</a>';
 
 ?>
 <!DOCTYPE html>
@@ -20,73 +20,20 @@ echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
 <link rel="stylesheet" type="text/css" href="admin2.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <title>Админ</title>
-<style>
-    .admin-btn {
-        display: inline-block;
-        background: #1e3c72;
-        color: white;
-        text-decoration: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        margin: 5px;
-        font-size: 14px;
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-    }
-    .admin-btn:hover {
-        background: #0f2b4f;
-    }
-
-    /* Стили модального окна для просмотра изображений */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.8);
-    }
-    .modal-content {
-        margin: auto;
-        display: block;
-        max-width: 80%;
-        max-height: 80%;
-    }
-    .close {
-        position: absolute;
-        top: 15px;
-        right: 35px;
-        color: #f1f1f1;
-        font-size: 40px;
-        font-weight: bold;
-        transition: 0.3s;
-        cursor: pointer;
-    }
-    .close:hover,
-    .close:focus {
-        color: #bbb;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
 </head>
 
 <body>
 <br>
 <div class="form_row">
-    <a href="zakaz.php" target="_blank" rel="noopener noreferrer" class="admin-btn">Заказы</a>
-    <a href="mater.php" target="_blank" rel="noopener noreferrer" class="admin-btn">Материалы</a>
-    <a href="zp.php" class="admin-btn">Зарплата</a>
-    <a href="rashod.php" target="_blank" rel="noopener noreferrer" class="admin-btn">Прочие расходы</a>
-    <a href="fin.php" class="admin-btn">Финансовая отчётность</a>
-    <a href="workes.php" class="admin-btn">Сотрудники</a>
-    <a href="dostup.php" class="admin-btn">Управление доступом</a>
-    <a href="izdelie.php" class="admin-btn">Изделия</a>
-    <a href="img_list.php" class="admin-btn">Изображения</a>
+    <a href="zakaz.php" target="_blank" rel="noopener noreferrer">Заказы</a>
+    <a href="mater.php" target="_blank" rel="noopener noreferrer">Материалы</a>
+    <a href="zp.php" >Зарплата</a>
+    <a href="rashod.php" target="_blank" rel="noopener noreferrer">Расходы</a>
+    <a href="fin.php">Финансы</a>
+    <a href="workes.php">Сотрудники</a>
+    <a href="dostup.php">Доступ</a>
+    <a href="izdelie.php">Изделия</a>
+    <a href="img_list.php">Изображения</a>
 
     <!-- Форма загрузки файла -->
     <form method="post" enctype="multipart/form-data" style="display: inline-block; margin-left: 10px;">
@@ -94,7 +41,7 @@ echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
         <input type="file" name="file">
         <input type="submit" value="Загрузить файл!">
     </form>
-</div>
+   </div>
 <br>
 <!-- <p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
 <a href="reset.php">🔄 Сбросить демо-данные</a> -->
@@ -362,7 +309,7 @@ $(function() {
 $('td:nth-child(6),th:nth-child(6)').hide();
 $('td:nth-child(7),th:nth-child(7)').hide();
 
-// ===== Новый функционал: просмотр изображения по клику на строку таблицы otchet =====
+// просмотр изображения по клику на строку таблицы otchet
 $(function() {
     // Клик по строкам таблицы otchet (tbody tr)
     $('table.otchet-table tbody tr').click(function(e) {

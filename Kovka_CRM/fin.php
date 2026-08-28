@@ -30,7 +30,7 @@ if(isset($_POST["fin"])){
         <?php include "finTab.php"; ?>
     </div>
     <div class="div2">
-        <form class="form_row" method="POST">
+        <form method="POST">
             <?php echo csrf_token_field(); ?>
             <input type="text" id="id" name="id" readonly size="5" placeholder="№">
             <input type="text" id="date" name="date" readonly placeholder="Дата и время">

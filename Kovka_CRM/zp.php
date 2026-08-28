@@ -32,14 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php include "zpTab.php"; ?>
     </div>
     <div class="div2">
-        <form class="form_row" method="POST">
+        <form method="POST">
             <?php echo csrf_token_field(); ?>
-            <input type="text" id="id" name="id" readonly size="5" placeholder="№">
-            <input type="text" id="date" name="date" required placeholder="Дата и время">
-            <input type="text" id="spec" name="spec" required size="20" placeholder="Должность">
-            <input type="text" id="name" name="name" required size="40" placeholder="Ф.И.О.">
-            <input type="text" id="nachis" name="nachis" required size="10" placeholder="Начислено">
-            <input type="text" id="poluch" name="poluch" required size="10" placeholder="Получено">
+            <input type="text" id="id" name="id" readonly size="5" placeholder="№"><br>
+            <input type="text" id="date" name="date" required placeholder="Дата и время"><br>
+            <input type="text" id="spec" name="spec" required size="20" placeholder="Должность"><br>
+            <input type="text" id="name" name="name" required size="40" placeholder="Ф.И.О."><br>
+            <input type="text" id="nachis" name="nachis" required size="10" placeholder="Начислено"><br>
+            <input type="text" id="poluch" name="poluch" required size="10" placeholder="Получено"><br>
             <input type="submit" id="save" name="Save" value=" Добавить ">
             <input type="submit" id="change" name="Change" value=" Изменить ">
             <input type="submit" id="delete" name="Delete" value=" Удалить ">

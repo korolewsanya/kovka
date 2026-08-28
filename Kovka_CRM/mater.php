@@ -32,16 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php include "materTab.php"; ?>
     </div>
     <div class="div2">
-        <form class="form_row" method="POST">
+        <form method="POST">
             <?php echo csrf_token_field(); ?>
-            <input type="text" id="id" name="id" readonly size="5" placeholder="№">
-            <input type="text" id="date" name="date" required size="15" placeholder="Дата и время">
-            <input type="text" id="name" name="name" required size="20" placeholder="Наименование">
-            <input type="text" id="kup" name="kup" required size="10" placeholder="Куплено">
-            <input type="text" id="izras" name="izras" required size="10" placeholder="Израсходовано">
-            <input type="text" id="ost" name="ost" required size="7" placeholder="Остаток">
-            <input type="text" id="prise" name="prise" size="15" required placeholder="Стоимость единицы">
-            <input type="number" id="itogo" name="itogo" required size="14" placeholder="Итоговая стоимость">
+            <input type="text" id="id" name="id" readonly size="3" placeholder="№"><br>
+            <input type="text" id="date" name="date" required size="20" placeholder="Дата и время"><br>
+            <input type="text" id="name" name="name" required size="28" placeholder="Наименование"><br>
+            <input type="text" id="kup" name="kup" required size="10" placeholder="Куплено"><br>
+            <input type="text" id="izras" name="izras" required size="17" placeholder="Израсходовано"><br>
+            <input type="text" id="ost" name="ost" required size="10" placeholder="Остаток"><br>
+            <input type="text" id="prise" name="prise" size="24" required placeholder="Стоимость единицы"><br>
+            <input type="number" id="itogo" name="itogo" required size="30" placeholder="Итоговая стоимость"><br>
             <input type="submit" id="save" name="Save" value=" Добавить ">
             <input type="submit" id="change" name="Change" value=" Изменить ">
             <input type="submit" id="delete" name="Delete" value=" Удалить ">
