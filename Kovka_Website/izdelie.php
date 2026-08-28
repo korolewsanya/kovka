@@ -97,151 +97,11 @@ if ($max_price == 0) $max_price = $global_max;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
-    <link rel="stylesheet" type="text/css" href="mangal.css">
+    <link rel="stylesheet" type="text/css" href="izdelie.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Marck+Script&family=Lobster&display=swap" rel="stylesheet">
-    <style>
-        /* Дополнительные стили для карточек, чтобы изображения не обрезались */
-        .container4 {
-            display: inline-block;
-            width: 220px;
-            margin: 15px;
-            text-align: center;
-            vertical-align: top;
-        }
-        .product-image {
-            width: 200px;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f5f5f5;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 0 auto;
-        }
-        .product-image img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        .pris {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-        
-        /* Стили для фильтра */
-        .filter-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 0 15px 20px 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-        }
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .filter-group label {
-            font-weight: 500;
-            color: #333;
-        }
-        .filter-group input[type="number"] {
-            width: 100px;
-            padding: 8px 12px;
-            border: 2px solid #8B4513;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .filter-group input[type="number"]:focus {
-            border-color: #A0522D;
-        }
-        .filter-group select {
-            padding: 8px 12px;
-            border: 2px solid #8B4513;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            outline: none;
-            background: white;
-            cursor: pointer;
-        }
-        .filter-group select:focus {
-            border-color: #A0522D;
-        }
-        .filter-btn {
-            padding: 8px 25px;
-            background: #8B4513;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-        .filter-btn:hover {
-            background: #A0522D;
-        }
-        .filter-reset {
-            padding: 8px 20px;
-            background: #e8e0d8;
-            color: #5a3d2b;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-            text-decoration: none;
-        }
-        .filter-reset:hover {
-            background: #d4c8bc;
-        }
-        .filter-info {
-            font-size: 0.9rem;
-            color: #666;
-            text-align: center;
-            width: 100%;
-            margin-top: 5px;
-        }
-        
-        @media only screen and (max-width: 480px) {
-            .filter-container {
-                flex-direction: column;
-                padding: 15px;
-            }
-            .filter-group {
-                width: 100%;
-                justify-content: center;
-            }
-            .filter-group input[type="number"] {
-                width: 80px;
-            }
-            .filter-btn, .filter-reset {
-                width: 100%;
-                text-align: center;
-            }
-        }
-        @media (min-width: 481px) and (max-width:768px) {
-            .filter-container {
-                padding: 15px;
-            }
-            .filter-group input[type="number"] {
-                width: 80px;
-            }
-        }
-    </style>
+
 </head>
 <body>
 <header>
@@ -262,7 +122,7 @@ if ($max_price == 0) $max_price = $global_max;
         <article class="filter-group">
             <label>Цена:</label>
             <input type="number" name="min_price" placeholder="от" value="<?= $min_price > 0 ? $min_price : '' ?>" min="<?= $global_min ?>">
-            <span>—</span>
+            <span class="price-separator">—</span>
             <input type="number" name="max_price" placeholder="до" value="<?= $max_price > 0 ? $max_price : '' ?>" min="<?= $global_min ?>">
         </article>
         
