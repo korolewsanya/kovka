@@ -108,9 +108,9 @@ if ($max_price == 0) $max_price = $global_max;
     <p class="p pris2">Сделаем по индивидуальному заказу</p>
     <img class="img" src="img/Надпись.png">
     <p class="p">
-        <a href="tel:+79001316418">Тел.: +79001316418</a>
-        <a href="https://wa.me/79045081752"><img src="img/WhatsApp.png"></a>
-        <a href="https://t.me/Aleksandr_Korolew"><img src="img/Telegram.png"></a>
+        <a href="tel:+79934456418">Тел.: +79934456418</a>
+        <a href="https://wa.me/79934456418"><img src="img/WhatsApp.png"></a>
+        <a href="https://t.me/Alexander_Korolew"><img src="img/Telegram.png"></a>
     </p>
 </header>
 

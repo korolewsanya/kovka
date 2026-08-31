@@ -101,7 +101,7 @@ $data = date("Y-m-d H:i:s");
                 </div>
                 <div class="form-group">
                     <label>Телефон *</label>
-                    <input type="tel" name="tel" placeholder="+7 (904) 508-17-52" required>
+                    <input type="tel" name="tel" placeholder="+7 (993) 445-64-18" required>
                 </div>
                 <div class="form-group">
                     <label>Email</label>
