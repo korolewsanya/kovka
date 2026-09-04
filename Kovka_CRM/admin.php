@@ -13,7 +13,7 @@ echo '<a href="logout.php" style="float: right; margin: 10px; color: red; font-w
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,8 +79,6 @@ if($result = $conn->query($sql)) {
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["izdelie"]) . "</td>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["Prise"]) . "</td>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["Pay"]) . "</td>";
-        echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["Proces"]) . "</td>";
-        echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["Proces"]) . "</td>";
         echo "</tr>";
         echo "</tbody>";
     }
