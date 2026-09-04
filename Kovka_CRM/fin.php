@@ -33,7 +33,7 @@ if(isset($_POST["fin"])){
         <form method="POST">
             <?php echo csrf_token_field(); ?>
             <input type="text" id="id" name="id" readonly size="5" placeholder="№">
-            <input type="text" id="date" name="date" readonly placeholder="Дата и время">
+            <input type="text" id="date" name="date" placeholder="Дата и время">
             <input type="number" id="dohod" name="dohod" required size="20" placeholder="Доход">
             <input type="number" id="rashod" name="rashod" required size="40" placeholder="Расход">
             <input type="number" id="prib" name="prib" required size="10" placeholder="Прибыль">
