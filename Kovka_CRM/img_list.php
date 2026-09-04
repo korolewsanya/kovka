@@ -47,7 +47,7 @@ if (is_dir($webPath)) {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Управление изображениями</title>
