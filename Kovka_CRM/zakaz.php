@@ -6,7 +6,7 @@ require_once 'auth_check.php';
 include "../db_connection.php";
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
