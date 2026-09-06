@@ -102,7 +102,7 @@ if($result = $conn->query($sql)) {
         $imageUrl = '';
         if (!empty($image)) {
             // Полный путь к файлу (пробелы допустимы в HTML, браузер сам их закодирует)
-            $imageUrl = '/Kovka_new/img/' . $image;
+            $imageUrl = '../img/' . $image;
         }
         // Добавляем data-image-url к строке
         echo "<tbody style='border:1px solid black; border-collapse:collapse'>";
@@ -239,7 +239,7 @@ if (isset($_POST["delete"]) && isset($_POST["report_id"]) && $_POST["report_id"]
 
 <script>
 // Прокрутка таблицы вниз
-$('div').animate({scrollTop:5000},'50');
+$('div').animate({scrollTop:1000},'100');
 
 // Вставка в поля ввода из таблицы (клик по строке) – работает для всех таблиц
 $(function() {
