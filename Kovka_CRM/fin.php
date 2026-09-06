@@ -2,6 +2,7 @@
 define('APP_START', true);
 require_once '../security.php';
 require_once 'auth_check.php';
+check_role('admin'); 
 security_headers();
 csrf_token(); // гарантируем наличие токена в сессии
 
@@ -18,6 +19,7 @@ if(isset($_POST["fin"])){
     <title>Финансовая отчётность</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+    
 </head>
 <body>
     <br>
