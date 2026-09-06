@@ -199,10 +199,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
         <input type="hidden" id="id" name="id" value="0">
         <input type="hidden" id="cod" name="cod" readonly value="<?php echo htmlspecialchars($userid ?? ''); ?>">
         <input type="hidden" id="class_work" name="class_work" value="">
-        <input type="text" id="prof" name="prof" value="<?php echo htmlspecialchars($current_role['prof_value']); ?>">
-        <input type="text" id="name" name="name" value="">
-        <textarea id="tz" name="tz" cols="40" rows="4" placeholder="Тех.задание"></textarea>
-        <textarea id="otchet" name="otchet" cols="40" rows="4" placeholder="Отчёт"></textarea>
+        <input type="text" id="prof" name="prof" readonly value="<?php echo htmlspecialchars($current_role['prof_value']); ?>"> <br>
+        <input type="text" id="name" name="name" value="" placeholder="Имя"> <br>
+        <textarea id="tz" name="tz" cols="40" rows="4" placeholder="Тех.задание"></textarea> <br>
+        <textarea id="otchet" name="otchet" cols="40" rows="4" placeholder="Отчёт"></textarea> <br>
         <input type="submit" name="Save" value=" Добавить ">
         <input type="submit" name="Change" value=" Изменить ">
         <input type="submit" name="Delete" value=" Удалить ">
@@ -275,6 +275,9 @@ $conn->close();
 ?>
 
 <script>
+    // Прокрутка таблицы вниз
+$('div').animate({scrollTop:1000},'100');
+
 $(function() {
     $('#otchet, #tz').on('click', function(e) {
         e.stopPropagation();
