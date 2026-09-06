@@ -2,6 +2,7 @@
 define('APP_START', true);
 require_once '../security.php';
 require_once 'auth_check.php';
+check_role('admin');
 security_headers();
 
 //$uploadDir = 'C:\\xampp\\htdocs\\Загрузк изображений на сервер\\Upload_Image_to_Server_in_Db\\uploads\\';

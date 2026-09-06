@@ -2,6 +2,7 @@
 define('APP_START', true);
 require_once '../security.php';
 require_once 'auth_check.php';
+check_role('admin');
 security_headers();
 
 include "../db_connection.php";
@@ -109,6 +110,7 @@ foreach ($tableKeys as $key) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление изделиями</title>
     <link rel="stylesheet" href="izdelie.css">
+   
 </head>
 <body>
 <div class="container">
@@ -152,7 +154,7 @@ foreach ($tableKeys as $key) {
             <div class="form-group">
                 <label>Изображение (image):</label>
                 <input type="text" name="image" id="image" placeholder="имя_файла.jpg">
-                <small>Только имя файла (скопироват из раздела Изображения)</small>
+                <small>Только имя файла (можно скопироват из раздела Изображения)</small>
             </div>
             <div class="form-group">
                 <label>Длина (Dlina):</label>
