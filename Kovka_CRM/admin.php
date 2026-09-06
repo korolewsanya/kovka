@@ -18,6 +18,7 @@ echo '<a href="logout.php" style="float: right; margin: 10px; color: red; font-w
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="admin2.css" />
+<link rel="stylesheet" type="text/css" href="working_process_modal.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="admin.js"></script> <!-- Подключение внешнего JS файла -->
 <title>Админ</title>
