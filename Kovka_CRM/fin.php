@@ -54,7 +54,7 @@ if(isset($_POST["fin"])){
             <input type="date" name="calendar_c">
             &nbsp;по
             <input type="date" name="calendar_po">
-            <input type="text" id="fin1" name="fin">
+            <input type="text" id="fin1" name="fin" readonly hidden>
             <input type="submit" id="pok" value="Показать">
         </p>
     </form>
@@ -72,7 +72,7 @@ if(isset($_POST["fin"])){
             <input type="date" name="calendar_c">
             &nbsp;по
             <input type="date" name="calendar_po">
-            <input type="text" id="fin2" name="fin">
+            <input type="text" id="fin2" name="fin" readonly hidden>
             <input type="submit" id="pok" value="Показать">
         </p>
     </form>
