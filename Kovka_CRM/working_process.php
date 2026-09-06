@@ -4,61 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="admin2.css" />
+<link rel="stylesheet" type="text/css" href="working_process_modal.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<title>рабочий процесс</title>
-<style>
-    .admin-btn {
-        display: inline-block;
-        background: #1e3c72;
-        color: white;
-        text-decoration: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        margin: 5px;
-        font-size: 14px;
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-    }
-    .admin-btn:hover {
-        background: #0f2b4f;
-    }
-
-    /* Стили модального окна для просмотра изображений */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.8);
-    }
-    .modal-content {
-        margin: auto;
-        display: block;
-        max-width: 80%;
-        max-height: 80%;
-    }
-    .close {
-        position: absolute;
-        top: 15px;
-        right: 35px;
-        color: #f1f1f1;
-        font-size: 40px;
-        font-weight: bold;
-        transition: 0.3s;
-        cursor: pointer;
-    }
-    .close:hover,
-    .close:focus {
-        color: #bbb;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
+<title>Рабочий процесс</title>
 </head>
 
 <body>
