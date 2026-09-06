@@ -1,6 +1,10 @@
 <?php
-include "../db_connection.php";
 require_once 'auth_check.php';
+require_once '../security.php';
+check_role('admin');         // Только админ 
+csrf_token();
+
+include "../db_connection.php";
 
 // ВЫВОД ТАБЛИЦЫ (с экранированием)
 $sql = "SELECT * FROM dostup";
