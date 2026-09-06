@@ -47,7 +47,7 @@ function csrf_check() {
 // Предполагается, что после логина в сессии сохраняются user_id и role
 function require_login() {
     if (empty($_SESSION['user_id'])) {
-        redirect('/login.php');
+        redirect('../Kovka_CRM/vhod.php');
     }
 }
 
