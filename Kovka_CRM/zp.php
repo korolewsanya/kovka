@@ -2,6 +2,7 @@
 define('APP_START', true);
 require_once '../security.php';
 require_once 'auth_check.php';
+check_role('admin');
 security_headers();
 
 // Обработка POST-запроса (если есть)

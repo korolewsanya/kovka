@@ -2,6 +2,7 @@
 if (!function_exists('csrf_check')) {
     require_once '../security.php';
     require_once 'auth_check.php';
+    check_role('admin');         // Только админ
 }
 include "../db_connection.php";
 

@@ -3,6 +3,7 @@ define('APP_START', true);
 require_once '../security.php';
 require_once 'auth_check.php';
 security_headers();
+check_role('admin'); 
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('HTTP/1.0 405 Method Not Allowed');
