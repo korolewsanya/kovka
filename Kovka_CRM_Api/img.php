@@ -15,7 +15,7 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            background-color: #000;
+            background-color: white;
         }
         
         .fullscreen-bg {
@@ -27,7 +27,7 @@
             background-position: center;
             background-repeat: no-repeat;
             background-size: auto 100%; /* Высота на весь экран, ширина пропорционально */
-            background-color: #000;
+            background-color: white;
         }
     </style>
 </head>
