@@ -61,24 +61,45 @@ security_headers();
     <?php include "footer.html"; ?>
     
     <script>
+        /**
+ * Функция валидации формы поиска.
+ * Вызывается через атрибут onsubmit="return validateForm()" на теге <form>.
+ * Если функция вернёт false — форма не отправится.
+ * 
+ * @returns {boolean} true — отправить форму, false — блокировать отправку
+ */
     function validateForm() {
+        // Получаем DOM-элемент поля ввода по его id="searchInput"
         var input = document.getElementById('searchInput');
+        // Получаем DOM-элемент сообщения об ошибке по id="errorMessage"
         var error = document.getElementById('errorMessage');
         
+          // .trim() убирает пробелы по краям — чтобы строка из одних пробелов тоже считалась пустой
         if (input.value.trim() === '') {
+            // .classList.add() добавляет CSS-класс 'show' элементу, который делает сообщение видимым (стиль описан в glav.css)
             error.classList.add('show');
+            // Меняем цвет рамки поля на красный прямо через inline-стиль
             input.style.borderColor = 'red';
+            // Возвращаем false — форма не отправляется
             return false;
         }
         
+        // Если поле заполнено — убираем класс 'show' (скрываем ошибку)
         error.classList.remove('show');
+        // Возвращаем исходный цвет рамки
         input.style.borderColor = '#8B4513';
+        // Возвращаем true — форма отправляется на search.php
         return true;
     }
     
-    // Скрываем ошибку при вводе
+    // Навешиваем обработчик события 'input' на поле поиска.
+    // 'input' срабатывает при каждом изменении значения (набор текста, вставка, удаление).
+    // Внутри функции this указывает на сам элемент input.
     document.getElementById('searchInput').addEventListener('input', function() {
         var error = document.getElementById('errorMessage');
+
+        // Если пользователь начал что-то вводить (не пусто) —
+        // сразу скрываем сообщение об ошибке и возвращаем нормальный цвет рамки
         if (this.value.trim() !== '') {
             error.classList.remove('show');
             this.style.borderColor = '#8B4513';
