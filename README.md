@@ -62,35 +62,33 @@
 
 ### 📸 Галерея скриншотов
 
-#### 🛍 Витрина интернет-магазина
+#### 🛍 Витрина интернет-магазина (Kovka_Website)
 <details>
 <summary>👉 Нажмите, чтобы развернуть скриншоты сайта</summary>
 <br>
 
-| Главная страница | Каталог товаров |
+| Главная страница | Каталог изделий |
 | :---: | :---: |
-| <img src="screenshots/Сайт/главная.png" width="400"> | <img src="screenshots/Сайт/товары.png" width="400"> |
-| **Поиск по сайту** | **Оформление заказа** |
-| <img src="screenshots/Сайт/поиск.png" width="400"> | <img src="screenshots/Сайт/заказ.png" width="400"> |
-| **Успешный заказ** | |
-| <img src="screenshots/Сайт/финиш.png" width="400"> | |
+| <img src="screenshots/Kovka_Website/glav.png" width="400"> | <img src="screenshots/Kovka_Website/izdelie.png" width="400"> |
+| **Оформление заказа** | **Успешный заказ** |
+| <img src="screenshots/Kovka_Website/zakaz.png" width="400"> | <img src="screenshots/Kovka_Website/finish.png" width="400"> |
 
 </details>
 
-#### ⚙️ Админ-панель и CRM
+#### ⚙️ Админ-панель и CRM (Kovka_CRM)
 <details>
 <summary>👉 Нажмите, чтобы развернуть скриншоты админки</summary>
 <br>
 
-| Инфопанель | Управление заказами |
+| Вход в систему | Главная |
 | :---: | :---: |
-| <img src="screenshots/Админка/Инфопанель.png" width="400"> | <img src="screenshots/Админка/Заказы.png" width="400"> |
-| **Редактирование заказа** | **Управление товарами** |
-| <img src="screenshots/Админка/ЗаказыРедактирование.png" width="400"> | <img src="screenshots/Админка/Товары.png" width="400"> |
-| **Редактирование товара** | **Материалы** |
-| <img src="screenshots/Админка/ТоварыРедактирование.png" width="400"> | <img src="screenshots/Админка/Материалы.png" width="400"> |
-| **Отчеты** | |
-| <img src="screenshots/Админка/Отчеты.png" width="400"> | |
+| <img src="screenshots/Kovka_CRM/vhod.png" width="400"> | <img src="screenshots/Kovka_CRM/admin.png" width="400"> |
+| **Детали заказа** | **Управление изделиями** |
+| <img src="screenshots/Kovka_CRM/zakazDetail.png" width="400"> | <img src="screenshots/Kovka_CRM/izdelie.png" width="400"> |
+| **Материалы** | **Финансы** |
+| <img src="screenshots/Kovka_CRM/mater.png" width="400"> | <img src="screenshots/Kovka_CRM/fin.png" width="400"> |
+| **Список изображений** | |
+| <img src="screenshots/Kovka_CRM/img_list.png" width="400"> | |
 
 </details>
 
@@ -99,13 +97,13 @@
 <summary>👉 Нажмите, чтобы развернуть скриншоты приложения</summary>
 <br>
 
-| Главная | Заказы | Материалы |
+| Главная | Заказы | Изделия |
 | :---: | :---: | :---: |
-| <img src="screenshots/Приложение/Главная.png" width="200"> | <img src="screenshots/Приложение/Заказы.png" width="200"> | <img src="screenshots/Приложение/Материалы.png" width="200"> |
-| **Редактирование заказа** | **Создание товара** | **Редактирование материала** |
-| <img src="screenshots/Приложение/ЗаказыРедактирование.png" width="200"> | <img src="screenshots/Приложение/ТоварыСоздание.png" width="200"> | <img src="screenshots/Приложение/МатериалыРедактирование.png" width="200"> |
-| **Отчеты** | **Редактирование отчета** | **Финансы** |
-| <img src="screenshots/Приложение/Отчеты.png" width="200"> | <img src="screenshots/Приложение/ОтчетыРедактирование.png" width="200"> | <img src="screenshots/Приложение/Финансы.png" width="200"> |
+| <img src="screenshots/App/Главная.png" width="200"> | <img src="screenshots/App/Заказы.png" width="200"> | <img src="screenshots/App/Изделия.png" width="200"> |
+| **Редактирование заказа** | **Отчеты** | **Рабочий процесс** |
+| <img src="screenshots/App/ЗаказыРедактирование.png" width="200"> | <img src="screenshots/App/Отчеты.png" width="200"> | <img src="screenshots/App/Рабочий процесс.png" width="200"> |
+| **Сотрудники** | **Финансы** | |
+| <img src="screenshots/App/Сотрудники.png" width="200"> | <img src="screenshots/App/Финансы.png" width="200"> | |
 
 </details>
 
