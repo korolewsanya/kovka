@@ -56,7 +56,7 @@
 | **Backend** | PHP 8.4 (чистый, без фреймворков), REST API  |
 | **Frontend** | HTML5, CSS3, JavaScript (ES6+), jQuery, AJAX |
 | **База данных** | MySQL 8.0 |
-| **Mobile** | Java (Android), Retrofit|
+| **Mobile** | Java (Android)|
 
 ---
 
@@ -114,7 +114,7 @@
 - 🌐 **Сайт (витрина):** [ваш-домен.ru](https://ваш-домен.ru)
 - 🌐 **Админка/CRM:** [ваш-домен.ru/admin](https://ваш-домен.ru/admin)
 - 📱 **Google Play:** [ссылка на приложение](https://play.google.com/store/apps/details?id=ваш.package)
-- 📂 **GitHub:** [korolewsanya/kovka-php](https://github.com/korolewsanya/kovka-php)
+- 📂 **GitHub (приложение):** [korolewsanya/kovka-php](https://github.com/korolewsanya/kovka-php)
 
 #### 🔑 Единый доступ для тестирования
 
