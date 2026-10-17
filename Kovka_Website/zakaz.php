@@ -119,7 +119,7 @@ $data = date("Y-m-d H:i:s");
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: normal; cursor: pointer; margin-bottom: 0;">
                         <input type="checkbox" name="agree" required style="width: 18px; height: 18px; min-width: 18px; margin-top: 3px; cursor: pointer; flex-shrink: 0;">
                         <span style="line-height: 1.4;">
-                            Я согласен с 
+                            огласие с 
                             <a href="privacy.php" target="_blank" style="color: #667eea; text-decoration: underline;">
                                 политикой конфиденциальности
                             </a> *
@@ -141,6 +141,6 @@ $data = date("Y-m-d H:i:s");
         </div>
     </div>
 </div>
-</body>
 <?php include "footer.html"; ?>
+</body>
 </html>

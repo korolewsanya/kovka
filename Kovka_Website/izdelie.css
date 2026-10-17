@@ -41,11 +41,6 @@ html {
     margin-bottom: 5px;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
 
 /* Стили для фильтра */
 
@@ -225,6 +220,8 @@ a {
     body {
         /* Убирает прокрутку по горизонтале, для мобильной версии */
         overflow-x: hidden;
+        margin: 0;
+        padding: 0;
     }
     header {
         display: flex;

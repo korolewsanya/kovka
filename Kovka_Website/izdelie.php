@@ -88,8 +88,12 @@ $global_min = (int)$price_row['min_price'];
 $global_max = (int)$price_row['max_price'];
 
 // Если фильтр не задан, используем глобальные значения
-if ($min_price == 0) $min_price = $global_min;
-if ($max_price == 0) $max_price = $global_max;
+if ($min_price == 0) {
+    $min_price = $global_min;
+}
+if ($max_price == 0) {
+    $max_price = $global_max;
+}
 ?>
 <!DOCTYPE html>
 <html>
