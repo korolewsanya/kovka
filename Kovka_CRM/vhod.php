@@ -10,52 +10,63 @@ $error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    
-    $nabor = trim($_POST['nabor'] ?? '');
-    
-    if (!empty($nabor)) {
-        $stmt = $conn->prepare("SELECT `class_work` FROM `otchet` WHERE `cod` = ?");
-        $stmt->bind_param("s", $nabor);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-        
-        if ($user) {
-            $class_work = $user['class_work'];
-            
-            $roles = [
-                1 => 'admin',
-                2 => 'diz',
-                3 => 'svar',
-                4 => 'slesar',
-                5 => 'color',
-                6 => 'car'
-            ];
-            
-            if (isset($roles[$class_work])) {
-              
-                // Сохраняем данные в сессию
-                $_SESSION['user_logged_in'] = true;
-                $_SESSION['user_role'] = $roles[$class_work];
-                $_SESSION['user_cod'] = $nabor;
-                
-                // Обновляем последний код
-                $updateStmt = $conn->prepare("UPDATE cod SET cod = ? WHERE id = 6");
-                $updateStmt->bind_param("s", $nabor);
-                $updateStmt->execute();
-                $updateStmt->close();
-                
-                // Перенаправляем в зависимости от роли
-                if ($roles[$class_work] === 'admin') {
-                    header("Location: admin.php");
-                } else {
-                    header("Location: worker.php");
+
+    // Согласие с правилами тестирования. Проверяем, стоит ли галочка. Если нет — сразу выдаем ошибку.
+    if (!isset($_POST['agree_rules']) || $_POST['agree_rules'] !== 'on') {
+        $error_message = 'Для входа вы должны согласиться с правилами тестирования и политикой конфиденциальности.';
+    } else {
+        // Если галочка есть, продолжаем проверку кода доступа
+
+        $nabor = trim($_POST['nabor'] ?? '');
+
+        if (!empty($nabor)) {
+            $stmt = $conn->prepare("SELECT `class_work` FROM `otchet` WHERE `cod` = ?");
+            $stmt->bind_param("s", $nabor);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user = $result->fetch_assoc();
+
+            if ($user) {
+                $class_work = $user['class_work'];
+
+                $roles = [
+                    1 => 'admin',
+                    2 => 'diz',
+                    3 => 'svar',
+                    4 => 'slesar',
+                    5 => 'color',
+                    6 => 'car'
+                ];
+
+                if (isset($roles[$class_work])) {
+
+                    // Сохраняем данные в сессию
+                    $_SESSION['user_logged_in'] = true;
+                    $_SESSION['user_role'] = $roles[$class_work];
+                    $_SESSION['user_cod'] = $nabor;
+
+                    // сохраняем факт согласия в сессию (для истории)
+                    $_SESSION['agreed_to_rules'] = true;
+                    $_SESSION['agreement_time'] = date('Y-m-d H:i:s');
+
+                    // Обновляем последний код
+                    $updateStmt = $conn->prepare("UPDATE cod SET cod = ? WHERE id = 6");
+                    $updateStmt->bind_param("s", $nabor);
+                    $updateStmt->execute();
+                    $updateStmt->close();
+
+                    // Перенаправляем в зависимости от роли
+                    if ($roles[$class_work] === 'admin') {
+                        header("Location: admin.php");
+                    } else {
+                        header("Location: worker.php");
+                    }
+                    exit;
                 }
-                exit;
             }
         }
+        $error_message = 'Неверный код доступа';
     }
-    $error_message = 'Неверный код доступа';
 }
 ?>
 <!DOCTYPE html>
@@ -73,6 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     input[type="text"]:focus { border-color:#667eea; }
     input[type="submit"] { width:100%; padding:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:50px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:20px; }
     .error { background:#f44336; color:white; padding:10px; border-radius:10px; margin-bottom:20px; font-size:14px; }
+    /* Стили чекбокса */
+    .agree-block { margin-top: 20px; text-align: left; font-size: 13px; color: #555; line-height: 1.4; }
+    .agree-block label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+    .agree-block input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+    .agree-block a { color: #667eea; text-decoration: none; }
+    .agree-block a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -83,7 +100,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
     <form method="POST">
         <?= csrf_token_field() ?>
-        <input type="text" name="nabor" placeholder="Введите код доступа" autofocus>
+        <input type="text" name="nabor" placeholder="Введите код доступа" autofocus autocomplete="off">
+
+         <!-- Чекбокс согласия -->
+        <div class="agree-block">
+            <label>
+                <input type="checkbox" name="agree_rules" required>
+                <span>
+                    Согласие с  
+                    <a href="privacy.php" target="_blank">политикой конфиденциальности</a>.
+                </span>
+            </label>
+        </div>
+
         <input type="submit" value="Войти">
     </form>
 </div>

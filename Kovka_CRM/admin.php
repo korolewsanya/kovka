@@ -5,6 +5,13 @@ require_once 'auth_check.php';  // проверка авторизации
 check_role('admin');            // проверка, что это именно admin
 security_headers();
 
+// Согласие с правилами тестирования
+// Если в сессии нет отметки о согласии (например, пользователь
+// зашел напрямую по ссылке или сессия устарела) — выкидываем на вход.
+if (!isset($_SESSION['agreed_to_rules']) || $_SESSION['agreed_to_rules'] !== true) {
+    header("Location: vhod.php");
+    exit;
+}
 // Подключение к БД
 include "../db_connection.php";
 
@@ -52,14 +59,14 @@ echo '<a href="logout.php" style="float: right; margin: 10px; color: red; font-w
 <div class="tableFixHead">
 <?php
 $sql = "SELECT * FROM cod";
-if($result = $conn->query($sql)){
-    while($row = $result->fetch_array()){
+if ($result = $conn->query($sql)) {
+    while ($row = $result->fetch_array()) {
         $userid = $row["cod"];
     }
 }
 
 $sql = "SELECT * FROM zakaz";
-if($result = $conn->query($sql)) {
+if ($result = $conn->query($sql)) {
     echo "<table style='border:1px solid black; border-collapse:collapse; position:sticky; height:400px;'>
         <thead style='border:1px solid black'>
             <tr style='border:1px solid black'>
@@ -72,7 +79,7 @@ if($result = $conn->query($sql)) {
                 <th style='border:1px solid black; padding-left:5px'>Процесс выполнения</th>
              </tr>
         </thead>";
-    foreach($result as $row){
+    foreach ($result as $row) {
         echo "<tbody style='border:1px solid black; border-collapse:collapse'>";
         echo "<tr style='border:1px solid black'>";
         echo "<td style='border:1px solid black; padding-left:5px'>" . htmlspecialchars($row["Id"]) . "</td>";
@@ -92,7 +99,7 @@ if($result = $conn->query($sql)) {
 <div class="tableFixHead">
 <?php
 $sql = "SELECT * FROM otchet";
-if($result = $conn->query($sql)) {
+if ($result = $conn->query($sql)) {
     echo "<table class='otchet-table' style='border:1px solid black; border-collapse:collapse; position:sticky; max-height:400px;'>
         <thead style='border:1px solid black'>
             <tr style='border:1px solid black'>
@@ -105,7 +112,7 @@ if($result = $conn->query($sql)) {
                 <th style='border:1px solid black; padding-left:5px'>Классификация</th>
              </tr>
         </thead>";
-    foreach($result as $row){
+    foreach ($result as $row) {
         $image = isset($row['image']) ? $row['image'] : '';
         $imageUrl = '';
         if (!empty($image)) {
@@ -137,14 +144,14 @@ if($result = $conn->query($sql)) {
         
         <?php
         $specialists = [];
-        $sql = "SELECT id, prof, name, cod, class_work FROM dostup ORDER BY prof, name";
-        $result = $conn->query($sql);
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $specialists[] = $row;
-            }
-        }
-        ?>
+$sql = "SELECT id, prof, name, cod, class_work FROM dostup ORDER BY prof, name";
+$result = $conn->query($sql);
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $specialists[] = $row;
+    }
+}
+?>
         <div style="margin-bottom: 15px;">
             <label for="specialist_select">Выберите специалиста:</label>
             <select id="specialist_select" style="padding: 4px; border-radius: 4px;">
@@ -184,12 +191,12 @@ if($result = $conn->query($sql)) {
 </div>
 
 <div id="div3">
-<?php 
+<?php
 date_default_timezone_set('Europe/Moscow');
 $current_date = date('Y-m-d H:i:s');
 
 // Обработка добавления
-if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"]) && 
+if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"]) &&
     isset($_POST["prof"]) && isset($_POST["name"]) && isset($_POST["tz"])) {
     csrf_check();
 
@@ -201,9 +208,9 @@ if (isset($_POST["save"]) && isset($_POST["cod"]) && isset($_POST["class_work"])
 
     $stmt = $conn->prepare("INSERT INTO otchet (cod, class_work, prof, name, tz, date) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssss", $cod, $class_work, $prof, $name, $tz, $current_date);
-    if($stmt->execute()){
+    if ($stmt->execute()) {
         echo "<script>window.location.href = 'admin.php';</script>";
-    } else{
+    } else {
         echo "Ошибка добавления: " . $stmt->error;
     }
     $stmt->close();
@@ -214,12 +221,12 @@ if (isset($_POST["edit"]) && isset($_POST["report_id"]) && $_POST["report_id"] >
     csrf_check();
     $id = (int)$_POST["report_id"];
     $tz = $_POST["tz"];
-    
+
     $stmt = $conn->prepare("UPDATE otchet SET tz=? WHERE id=?");
     $stmt->bind_param("si", $tz, $id);
-    if($stmt->execute()){
+    if ($stmt->execute()) {
         echo "<script>window.location.href = 'admin.php';</script>";
-    } else{
+    } else {
         echo "Ошибка изменения: " . $stmt->error;
     }
     $stmt->close();
@@ -229,12 +236,12 @@ if (isset($_POST["edit"]) && isset($_POST["report_id"]) && $_POST["report_id"] >
 if (isset($_POST["delete"]) && isset($_POST["report_id"]) && $_POST["report_id"] > 0) {
     csrf_check();
     $id = (int)$_POST["report_id"];
-    
+
     $stmt = $conn->prepare("DELETE FROM otchet WHERE id=?");
     $stmt->bind_param("i", $id);
-    if($stmt->execute()){
+    if ($stmt->execute()) {
         echo "<script>window.location.href = 'admin.php';</script>";
-    } else{
+    } else {
         echo "Ошибка удаления: " . $stmt->error;
     }
     $stmt->close();

@@ -14,11 +14,18 @@ $name = '';
 $tel = '';
 $email = '';
 
-// Проверка наличия всех необходимых полей (как в оригинале)
-if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'], 
-          $_POST['shirina'], $_POST['visota'], $_POST['prise'], 
-          $_POST['name'], $_POST['tel'])) {
-    
+// Проверка наличия всех необходимых полей
+if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'],
+    $_POST['shirina'], $_POST['visota'], $_POST['prise'],
+    $_POST['name'], $_POST['tel'])) {
+
+    // СЕРВЕРНАЯ ПРОВЕРКА СОГЛАСИЯ С ПОЛИТИКОЙ КОНФИДЕНЦИАЛЬНОСТИ
+    // Проверяем, что чекбокс был установлен и имеет значение 'on'.
+    // Если пользователь (или бот) отправил форму без галочки, сервер не будет сохранять его данные в базу.
+    if (!isset($_POST['agree']) || $_POST['agree'] !== 'on') {
+        $error_message = 'Необходимо согласие с политикой конфиденциальности';
+    }
+
     $data = $_POST['data'];
     $izdelie = $_POST['izdelie'];
     $image = $_POST['image'];  // НЕ МЕНЯЕМ, оставляем как пришло
@@ -30,33 +37,45 @@ if (isset($_POST['data'], $_POST['izdelie'], $_POST['image'], $_POST['dlina'],
     $tel = $_POST['tel'];
     $email = $_POST['email'] ?? '';
     $coment = $_POST['coment'] ?? '';
-    
-    // ТОЛЬКО БАЗОВАЯ ЗАЩИТА (без сложных regex)
+
+    // БАЗОВАЯ ЗАЩИТА
     $name = strip_tags(trim($name));
     $tel = strip_tags(trim($tel));
     $email = strip_tags(trim($email));
     $coment = strip_tags(trim($coment));
     $izdelie = strip_tags($izdelie);
-    $image = basename($image);  // только basename для безопасности
-    
+    $image = basename($image);  // basename для безопасности
+
     // Минимальная проверка: поля не пустые
     if (empty($name) || empty($tel)) {
         $error_message = 'Заполните имя и телефон';
     }
-    
+
+    // Если ошибок нет (включая проверку согласия), сохраняем заказ
     if (empty($error_message)) {
         $stmt = $conn->prepare("INSERT INTO `zakaz` 
             (`date`, `izdelie`, `image`, `Dlina`, `Shirina`, `Visota`, `Prise`, `Name`, `Tel`, `Email`, `Coment`) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
+
         if ($stmt === false) {
             error_log("Ошибка prepare: " . $conn->error);
             $error_message = 'Внутренняя ошибка сервера';
         } else {
-            $stmt->bind_param("ssssssdssss", 
-                $data, $izdelie, $image, $dlina, $shirina, $visota, 
-                $prise, $name, $tel, $email, $coment);
-            
+            $stmt->bind_param(
+                "ssssssdssss",
+                $data,
+                $izdelie,
+                $image,
+                $dlina,
+                $shirina,
+                $visota,
+                $prise,
+                $name,
+                $tel,
+                $email,
+                $coment
+            );
+
             if ($stmt->execute()) {
                 $success = true;
             } else {

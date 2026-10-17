@@ -111,6 +111,21 @@ $data = date("Y-m-d H:i:s");
                     <label>Комментарий к заказу</label>
                     <textarea name="coment" rows="4"></textarea>
                 </div>
+                <!-- Чекбокс согласия с политикой конфиденциальности.
+                  - name="agree" нужен для серверной проверки в finish.php.
+                  - required заставляет браузер блокировать отправку без галочки.
+                  - Ссылка ведет на страницу политики (privacy.php). -->
+                <div class="form-group" style="margin-top: 15px; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: normal; cursor: pointer; margin-bottom: 0;">
+                        <input type="checkbox" name="agree" required style="width: 18px; height: 18px; min-width: 18px; margin-top: 3px; cursor: pointer; flex-shrink: 0;">
+                        <span style="line-height: 1.4;">
+                            Я согласен с 
+                            <a href="privacy.php" target="_blank" style="color: #667eea; text-decoration: underline;">
+                                политикой конфиденциальности
+                            </a> *
+                        </span>
+                     </label>
+                </div>
                 <input type="hidden" name="data" value="<?= htmlspecialchars($data) ?>">
                 <input type="hidden" name="izdelie" value="<?= htmlspecialchars($izdelie) ?>">
                 <input type="hidden" name="image" value="<?= htmlspecialchars($image) ?>">
