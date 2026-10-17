@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_role'] = $roles[$class_work];
                     $_SESSION['user_cod'] = $nabor;
 
-                    // сохраняем факт согласия в сессию (для истории)
+                    // сохраняем факт согласия в сессию (для истории) ТОЛЬКО для тестирования и демо
                     $_SESSION['agreed_to_rules'] = true;
                     $_SESSION['agreement_time'] = date('Y-m-d H:i:s');
 
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?= csrf_token_field() ?>
         <input type="text" name="nabor" placeholder="Введите код доступа" autofocus autocomplete="off">
 
-         <!-- Чекбокс согласия -->
+         <!-- Чекбокс согласия ТОЛЬКО для тестирования и демо -->
         <div class="agree-block">
             <label>
                 <input type="checkbox" name="agree_rules" required>
