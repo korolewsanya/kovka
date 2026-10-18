@@ -107,8 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>
                 <input type="checkbox" name="agree_rules" required>
                 <span>
-                    Согласие с  
-                    <a href="privacy.php" target="_blank">политикой конфиденциальности</a>.
+                    Соглашаюсь с  
+                    <a href="privacy.php" target="_blank">политикой конфиденциальности</a>
+                    и правилами тестирования.
                 </span>
             </label>
         </div>
