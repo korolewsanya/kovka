@@ -1,31 +1,55 @@
 <?php
-// Убираем всё лишнее, оставляем минимальный рабочий код
-header('Content-Type: application/json; charset=utf-8');
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
 
-// Подключаем БД
-$conn = new mysqli("localhost", "root", "", "kovka");
-if ($conn->connect_error) {
-    echo json_encode(['error' => true, 'message' => 'Ошибка БД: ' . $conn->connect_error], JSON_UNESCAPED_UNICODE);
+define('APP_START', true);
+require_once '../../security.php';
+security_headers();
+
+function sendJson($data) {
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
-$conn->set_charset("utf8");
 
-$response = ['error' => true, 'message' => 'Недостаточно параметров'];
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
-    $id = (int)$_POST['id'];
-    
-    $result = $conn->query("DELETE FROM otchet WHERE id = $id");
-    
-    if ($result === true && $conn->affected_rows > 0) {
-        $response = ['error' => false, 'message' => 'Удалено'];
-    } else {
-        $response['message'] = 'Запись с id=' . $id . ' не найдена или не удалена';
-    }
-} else {
-    $response['message'] = 'Метод не POST или нет параметра id';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
+require_once '../../db_connection.php';
+
+$cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
+if ($cod === '') {
+    sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
+}
+
+$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
+$stmt->bind_param("s", $cod);
+$stmt->execute();
+$res = $stmt->get_result();
+$isAuth = ($res && $res->num_rows > 0);
+$stmt->close();
+
+if (!$isAuth) {
+    sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
+}
+
+if (isset($_POST['id']) && $_POST['id'] !== '') {
+    $id = intval($_POST['id']);
+    
+    $stmt = $conn->prepare("DELETE FROM otchet WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        sendJson(['error' => false, 'message' => 'Удалено']);
+    } else {
+        sendJson(['error' => true, 'message' => 'Запись не найдена']);
+    }
+    $stmt->close();
+} else {
+    sendJson(['error' => true, 'message' => 'Insufficient parameters']);
+}
 $conn->close();
-echo json_encode($response, JSON_UNESCAPED_UNICODE);
 ?>
