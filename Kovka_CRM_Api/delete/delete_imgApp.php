@@ -8,44 +8,50 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('Method not allowed');
 }
 
-// csrf_check(); // если используете
+require_once '../../db_connection.php';
 
-require_once '../../db_connection.php';   // или podklDB_images.php, смотря где таблицы
+$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+if ($adminCod === '') {
+    http_response_code(403);
+    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    exit;
+}
 
-$response = [];
+$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work IN (1, 2) LIMIT 1");
+$stmt->bind_param("s", $adminCod);
+$stmt->execute();
+$res = $stmt->get_result();
+$isAdmin = ($res && $res->num_rows > 0);
+$stmt->close();
 
-// Разрешённые таблицы (категории)
+if (!$isAdmin) {
+    http_response_code(403);
+    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    exit;
+}
+
 $allowedTables = [
     'mangal', 'lavo4ki', 'kozirek', 'zabor',
     'vorota', 'ogradki', 'reshetki', 'mebel', 'melo4i'
 ];
 
-// Проверяем наличие обязательных параметров
 if (empty($_POST['id']) || empty($_POST['category'])) {
-    $response['error'] = true;
-    $response['message'] = 'Необходимы параметры id и category';
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode(['error' => true, 'message' => 'Необходимы параметры id и category'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $id       = (int)$_POST['id'];
 $category = $_POST['category'];
 
-// Белый список
 if (!in_array($category, $allowedTables)) {
-    $response['error'] = true;
-    $response['message'] = "Недопустимая категория: $category";
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode(['error' => true, 'message' => "Недопустимая категория: $category"], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Формируем запрос (имя таблицы подставляем напрямую, т.к. оно проверено)
 $sql = "DELETE FROM `$category` WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    $response['error'] = true;
-    $response['message'] = 'Ошибка подготовки запроса: ' . $conn->error;
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode(['error' => true, 'message' => 'Ошибка подготовки запроса: ' . $conn->error], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -53,18 +59,15 @@ $stmt->bind_param('i', $id);
 
 if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
-        $response['error'] = false;
-        $response['message'] = 'Товар удалён';
+        $response = ['error' => false, 'message' => 'Товар удалён'];
     } else {
-        $response['error'] = false;
-        $response['message'] = 'Запись не найдена или уже удалена';
+        $response = ['error' => false, 'message' => 'Запись не найдена или уже удалена'];
     }
 } else {
-    $response['error'] = true;
-    $response['message'] = 'Ошибка выполнения: ' . $stmt->error;
+    $response = ['error' => true, 'message' => 'Ошибка выполнения: ' . $stmt->error];
 }
 
 $stmt->close();
 $conn->close();
-
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
+?>

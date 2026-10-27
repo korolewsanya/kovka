@@ -1,19 +1,17 @@
 <?php
-// Проверка apicall
-if (!isset($_GET['apicall']) || $_GET['apicall'] !== 'uploadpic') {
-    sendResponse(true, 'Invalid API call');
-    exit;
-}
+// Включаем вывод ошибок для отладки (потом можно убрать)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-// Путь к папке для сохранения файлов (ЛОКАЛЬНЫЙ, НЕ HTTP)
-$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/Kovka_git/kovka/img/';
+define('APP_START', true);
+require_once '../security.php'; // Исправлен путь
+security_headers();
 
-// Создать папку, если её нет
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-}
-
+// Функция должна быть объявлена ДО её первого вызова!
 function sendResponse($error, $message, $fileName = '', $fileUrl = '') {
+    // Очищаем буфер вывода от случайных пробелов/warnings
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: application/json; charset=utf-8');
     $response = [
         'error' => $error,
         'message' => $message
@@ -24,9 +22,43 @@ function sendResponse($error, $message, $fileName = '', $fileUrl = '') {
     if ($fileUrl) {
         $response['fileUrl'] = $fileUrl;
     }
-    header('Content-Type: application/json');
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+// Проверка apicall
+if (!isset($_GET['apicall']) || $_GET['apicall'] !== 'uploadpic') {
+    sendResponse(true, 'Invalid API call');
+}
+
+require_once '../db_connection.php'; // Исправлен путь
+
+$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+if ($adminCod === '') {
+    sendResponse(true, 'Forbidden: empty admin_cod');
+}
+
+$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
+if (!$stmt) {
+    sendResponse(true, 'DB prepare error: ' . $conn->error);
+}
+$stmt->bind_param("s", $adminCod);
+$stmt->execute();
+$res = $stmt->get_result();
+$isAdmin = ($res && $res->num_rows > 0);
+$stmt->close();
+$conn->close();
+
+if (!$isAdmin) {
+    sendResponse(true, 'Forbidden: not admin');
+}
+
+$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/Kovka_git/kovka/img/';
+
+if (!is_dir($uploadDir)) {
+    if (!mkdir($uploadDir, 0777, true)) {
+        sendResponse(true, 'Cannot create upload dir: ' . $uploadDir);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['pic'])) {
@@ -40,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['pic'])) {
             $fileUrl = 'http://192.168.1.156/Kovka_git/kovka/img/' . $newName;
             sendResponse(false, 'File uploaded successfully', $newName, $fileUrl);
         } else {
-            sendResponse(true, 'Failed to move uploaded file');
+            sendResponse(true, 'Failed to move uploaded file to: ' . $destination);
         }
     } else {
         sendResponse(true, 'Upload error code: ' . $file['error']);

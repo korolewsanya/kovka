@@ -3,7 +3,35 @@ define('APP_START', true);
 require_once '../security.php';
 security_headers();
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['error' => true, 'message' => 'Method not allowed']);
+    exit;
+}
+
 include "../db_connection.php";
+
+$cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
+if ($cod === '') {
+    http_response_code(403);
+    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    exit;
+}
+
+// Проверка, что код существует (любая роль)
+$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
+$stmt->bind_param("s", $cod);
+$stmt->execute();
+$res = $stmt->get_result();
+$isAuth = ($res && $res->num_rows > 0);
+$stmt->close();
+
+if (!$isAuth) {
+    http_response_code(403);
+    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    exit;
+}
 
 $tables = [
     'mangal'   => ['folder' => 'Мангалы',    'label' => 'Мангалы'],
@@ -26,12 +54,12 @@ foreach ($tables as $table => $info) {
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-            $imageFile = basename($row['image']); // только имя файла
+            $imageFile = basename($row['image']);
             $imageUrl = $baseUrl . rawurlencode($imageFile);
             $products[] = [
                 'id'       => $row['id'],
                 'image'    => $row['image'],
-                'tags'     => $row['izdelie'], // название товара
+                'tags'     => $row['izdelie'],
                 'path'     => $imageUrl,
                 'price'    => $row['Prise'],
                 'category' => $table
