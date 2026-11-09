@@ -20,18 +20,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 include "../db_connection.php";
 
-// ИЗМЕНЕНО: добавлена проверка кода доступа (cod)
 $cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
 if ($cod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAuth = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем код (любая роль)
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($cod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
 if (!$isAuth) {
     sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);

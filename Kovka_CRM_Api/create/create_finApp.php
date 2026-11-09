@@ -1,38 +1,47 @@
 <?php
 
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 define('APP_START', true);
 require_once '../../security.php';
 security_headers();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die('Method not allowed');
-}
-
-require_once '../../db_connection.php';
-
-$response = array();
-
-$cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
-if ($cod === '') {
-    http_response_code(403);
+function sendJson($data)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array("error" => true, "message" => "Forbidden"));
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
+}
+
+include "../../db_connection.php";
+
+$adminCod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
+if ($adminCod === '') {
+    sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
+}
+
+$isAdmin = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1, 4)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAdmin = true;
+            break;
+        }
+    }
+}
 
 if (!$isAdmin) {
-    http_response_code(403);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array("error" => true, "message" => "Forbidden"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: not admin/manager']);
 }
 
 $date   = isset($_POST['date']) ? $_POST['date'] : '';
@@ -41,19 +50,16 @@ $rashod = isset($_POST['rashod']) ? $_POST['rashod'] : '';
 $prib   = isset($_POST['prib']) ? $_POST['prib'] : '';
 
 if ($date === '' || $dohod === '' || $rashod === '' || $prib === '') {
-    echo json_encode(array("error" => true, "message" => "Insufficient parameters"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Insufficient parameters']);
 }
 
 $stmt = $conn->prepare("INSERT INTO `fin`(`date`, `dohod`, `rashod`, `prib`) VALUES (?,?,?,?)");
 $stmt->bind_param("ssss", $date, $dohod, $rashod, $prib);
 
 if ($stmt->execute()) {
-    $response['error'] = false;
-    $response['message'] = "fin created successfully!";
+    sendJson(['error' => false, 'message' => 'fin created successfully!']);
 } else {
-    $response['error'] = true;
-    $response['message'] = "failed\n " . $conn->error;
+    sendJson(['error' => true, 'message' => 'failed: ' . $conn->error]);
 }
 $stmt->close();
-echo json_encode($response);
+$conn->close();

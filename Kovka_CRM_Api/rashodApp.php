@@ -25,12 +25,17 @@ if ($cod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAuth = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем код через password_verify (любая роль)
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($cod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
 if (!$isAuth) {
     sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
@@ -45,6 +50,6 @@ if ($r && mysqli_num_rows($r) > 0) {
         $data[] = $row;
     }
 }
-echo json_encode(array("rashod" => $data), JSON_UNESCAPED_UNICODE);
+sendJson(array("rashod" => $data));
 mysqli_close($conn);
 ?>

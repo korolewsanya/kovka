@@ -1,51 +1,55 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 define('APP_START', true);
 require_once '../security.php';
 security_headers();
 
-// ИЗМЕНЕНО: Теперь сервер принимает только POST-запросы
+function sendJson($data) {
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die('Method not allowed');
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
 include "../db_connection.php";
 
-// ИЗМЕНЕНО: Получаем код авторизации из POST
 $cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
 if ($cod === '') {
-    http_response_code(403);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array("error" => true, "message" => "Forbidden"), JSON_UNESCAPED_UNICODE);
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
 }
 
-// ИЗМЕНЕНО: Проверяем, существует ли такой код в БД
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAuth = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем код через password_verify (любая роль)
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($cod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
 if (!$isAuth) {
-    http_response_code(403);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array("error" => true, "message" => "Forbidden"), JSON_UNESCAPED_UNICODE);
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
 }
 
 $sql_query = "SELECT * FROM `zp`";
-
 $r = mysqli_query($conn, $sql_query);
 $data = array();
 
-if (mysqli_num_rows($r) > 0)
-{
-while($row = mysqli_fetch_assoc($r))
-$data[] = $row;
+if ($r && mysqli_num_rows($r) > 0) {
+    while($row = mysqli_fetch_assoc($r)) {
+        $data[] = $row;
+    }
 }
-
-// ИЗМЕНЕНО: Ключ ответа теперь "zp" (было "mater"), чтобы Android читал правильно
-echo (json_encode(array("zp" => $data),JSON_UNESCAPED_UNICODE));
+sendJson(array("zp" => $data));
+mysqli_close($conn);
 ?>

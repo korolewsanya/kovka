@@ -1,33 +1,47 @@
 <?php
+
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 define('APP_START', true);
 require_once '../../security.php';
 security_headers();
 
+function sendJson($data)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die('Method not allowed');
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
 require_once '../../db_connection.php';
 
-$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+$adminCod = $_POST['admin_cod'] ?? ($_POST['cod'] ?? '');
 if ($adminCod === '') {
-    http_response_code(403);
-    echo json_encode(['error' => true, 'message' => 'Forbidden']);
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work IN (1, 2) LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+$isAdmin = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1, 2)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAdmin = true;
+            break;
+        }
+    }
+}
 
 if (!$isAdmin) {
-    http_response_code(403);
-    echo json_encode(['error' => true, 'message' => 'Forbidden']);
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: not admin/designer']);
 }
 
 $allowedTables = [
@@ -36,38 +50,32 @@ $allowedTables = [
 ];
 
 if (empty($_POST['id']) || empty($_POST['category'])) {
-    echo json_encode(['error' => true, 'message' => 'Необходимы параметры id и category'], JSON_UNESCAPED_UNICODE);
-    exit;
+    sendJson(['error' => true, 'message' => 'Необходимы параметры id и category']);
 }
 
 $id       = (int)$_POST['id'];
 $category = $_POST['category'];
 
 if (!in_array($category, $allowedTables)) {
-    echo json_encode(['error' => true, 'message' => "Недопустимая категория: $category"], JSON_UNESCAPED_UNICODE);
-    exit;
+    sendJson(['error' => true, 'message' => "Недопустимая категория: $category"]);
 }
 
 $sql = "DELETE FROM `$category` WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    echo json_encode(['error' => true, 'message' => 'Ошибка подготовки запроса: ' . $conn->error], JSON_UNESCAPED_UNICODE);
-    exit;
+    sendJson(['error' => true, 'message' => 'Ошибка подготовки запроса: ' . $conn->error]);
 }
 
 $stmt->bind_param('i', $id);
 
 if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
-        $response = ['error' => false, 'message' => 'Товар удалён'];
+        sendJson(['error' => false, 'message' => 'Товар удалён']);
     } else {
-        $response = ['error' => false, 'message' => 'Запись не найдена или уже удалена'];
+        sendJson(['error' => false, 'message' => 'Запись не найдена или уже удалена']);
     }
 } else {
-    $response = ['error' => true, 'message' => 'Ошибка выполнения: ' . $stmt->error];
+    sendJson(['error' => true, 'message' => 'Ошибка выполнения: ' . $stmt->error]);
 }
-
 $stmt->close();
 $conn->close();
-echo json_encode($response, JSON_UNESCAPED_UNICODE);
-?>

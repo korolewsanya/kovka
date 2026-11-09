@@ -1,57 +1,58 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 define('APP_START', true);
 require_once '../../security.php';
 security_headers();
 
-// ИЗМЕНЕНО: Проверка метода POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die('Method not allowed');
+function sendJson($data) {
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
-require_once '../../db_connection.php';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
+}
 
-$response = array();
+include "../../db_connection.php";
 
-// ИЗМЕНЕНО: Добавлена проверка admin_cod
 $adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
 if ($adminCod === '') {
-    http_response_code(403);
-    echo json_encode(array("error" => true, "message" => "Forbidden: empty admin_cod"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-// ИЗМЕНЕНО: Проверка, что это админ
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+$isAdmin = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1, 4)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAdmin = true;
+            break;
+        }
+    }
+}
 
 if (!$isAdmin) {
-    http_response_code(403);
-    echo json_encode(array("error" => true, "message" => "Forbidden: not admin"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: not admin/manager']);
 }
 
-// ИЗМЕНЕНО: Добавлена строгая проверка на существование id
-if(isset($_POST['id']) && $_POST['id'] !== ''){
-    $id = $_POST['id'];
-    $stmt = $conn->prepare("DELETE FROM zp WHERE id = ?");
-    $stmt->bind_param("s",$id);
-    
-    if($stmt->execute()) {
-        $response['error'] = false;
-        $response['message'] = "deleted successfully!";
-    } else {
-        $response['error'] = true;
-        $response['message'] = "failed\n ".$conn->error;
-    }
-    $stmt->close();
-} else{
-    $response['error'] = true;
-    $response['message'] = "Insufficient Parameters";
+$id = isset($_POST['id']) ? $_POST['id'] : '';
+if ($id === '') {
+    sendJson(['error' => true, 'message' => 'Insufficient parameters']);
 }
-echo json_encode($response);
+
+$stmt = $conn->prepare("DELETE FROM zp WHERE id = ?");
+$stmt->bind_param("s", $id);
+
+if ($stmt->execute()) {
+    sendJson(['error' => false, 'message' => 'deleted successfully!']);
+} else {
+    sendJson(['error' => true, 'message' => 'failed: ' . $conn->error]);
+}
+$stmt->close();
+$conn->close();
 ?>

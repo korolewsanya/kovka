@@ -32,9 +32,10 @@ if ($c && $po) {
             </thead>";
         while ($row = $result->fetch_assoc()) {
             echo "<tbody><tr>";
-            echo "<td>" . htmlspecialchars($row["izdelie"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["date"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["Pay"]) . "</td>";
+            // ИЗМЕНЕНО: добавлен padding: 8px и word-break: break-word для нормального отображения в WebView
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px; word-break: break-word;'>" . htmlspecialchars($row["izdelie"]) . "</td>";
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px;'>" . htmlspecialchars($row["date"]) . "</td>";
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px;'>" . htmlspecialchars($row["Pay"]) . "</td>";
             echo "</tr></tbody>";
         }
         echo "</table>";

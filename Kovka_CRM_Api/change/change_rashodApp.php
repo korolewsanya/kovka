@@ -18,38 +18,58 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
-require_once '../../db_connection.php';
+include "../../db_connection.php";
 
-$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+$adminCod = trim($_POST['admin_cod'] ?? ($_POST['cod'] ?? ''));
 if ($adminCod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
-
-if (!$isAdmin) {
-    sendJson(['error' => true, 'message' => 'Forbidden: not admin']);
+// Проверяем, что код существует у любой роли из списка
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1,2,3,4,5,6,7)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
 }
 
-$id     = isset($_POST['id'])     ? $_POST['id']     : '';
-$date   = isset($_POST['date'])   ? $_POST['date']   : '';
-$name   = isset($_POST['name'])   ? $_POST['name']   : '';
-$kup    = isset($_POST['kup'])    ? $_POST['kup']    : '';
-$izras  = isset($_POST['izras'])  ? $_POST['izras']  : '';
-$ost    = isset($_POST['ost'])    ? $_POST['ost']    : '';
-$prise  = isset($_POST['prise'])  ? $_POST['prise']  : '';
-$itogo  = isset($_POST['itogo'])  ? $_POST['itogo']  : '';
+if (!$isAuth) {
+    sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
+}
 
-if ($id === '' || $date === '' || $name === '' || $kup === '' || $izras === '' || $ost === '' || $prise === '' || $itogo === '') {
-    sendJson(['error' => true, 'message' => 'Insufficient parameters']);
+// trim полей, детальное сообщение о пропусках
+$id     = isset($_POST['id'])     ? trim($_POST['id'])     : '';
+$date   = isset($_POST['date'])   ? trim($_POST['date'])   : '';
+$name   = isset($_POST['name'])   ? trim($_POST['name'])   : '';
+$kup    = isset($_POST['kup'])    ? trim($_POST['kup'])    : '';
+$izras  = isset($_POST['izras'])  ? trim($_POST['izras'])  : '';
+$ost    = isset($_POST['ost'])    ? trim($_POST['ost'])    : '';
+$prise  = isset($_POST['prise'])  ? trim($_POST['prise'])  : '';
+$itogo  = isset($_POST['itogo'])  ? trim($_POST['itogo'])  : '';
+
+$missing = [];
+if ($id    === '') $missing[] = 'id';
+if ($date  === '') $missing[] = 'date';
+if ($name  === '') $missing[] = 'name';
+if ($kup   === '') $missing[] = 'kup';
+if ($izras === '') $missing[] = 'izras';
+if ($ost   === '') $missing[] = 'ost';
+if ($prise === '') $missing[] = 'prise';
+if ($itogo === '') $missing[] = 'itogo';
+
+if (!empty($missing)) {
+    sendJson(['error' => true, 'message' => 'Insufficient parameters: ' . implode(', ', $missing)]);
 }
 
 $stmt = $conn->prepare("UPDATE rashod SET date = ?, name = ?, kup = ?, izras = ?, ost = ?, prise = ?, itogo = ? WHERE id = ?");
+if (!$stmt) {
+    sendJson(['error' => true, 'message' => 'prepare failed: ' . $conn->error]);
+}
+
 $stmt->bind_param("sssssssi", $date, $name, $kup, $izras, $ost, $prise, $itogo, $id);
 
 if ($stmt->execute()) {
@@ -59,4 +79,3 @@ if ($stmt->execute()) {
 }
 $stmt->close();
 $conn->close();
-?>

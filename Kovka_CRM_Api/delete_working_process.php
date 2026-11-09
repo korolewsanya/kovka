@@ -20,27 +20,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 include "../db_connection.php";
 
-// ИЗМЕНЕНО: Добавлена проверка admin_cod (удалять может только админ)
-$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+$adminCod = $_POST['admin_cod'] ?? ($_POST['cod'] ?? '');
 if ($adminCod === '') {
-    sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
+    sendJson(['error' => true, 'message' => 'Forbidden: empty code']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем, что код существует (любая роль)
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
-if (!$isAdmin) {
-    sendJson(['error' => true, 'message' => 'Forbidden: not admin']);
+if (!$isAuth) {
+    sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
 }
 
 if (isset($_POST['id'])) {
     $id = (int)$_POST['id'];
     $stmt = $conn->prepare("DELETE FROM otchet WHERE id = ?");
     $stmt->bind_param("i", $id);
+    
     if ($stmt->execute()) {
         sendJson(['error' => false, 'message' => 'Удалено']);
     } else {
@@ -50,4 +55,5 @@ if (isset($_POST['id'])) {
 } else {
     sendJson(['error' => true, 'message' => 'Недостаточно параметров']);
 }
+$conn->close();
 ?>

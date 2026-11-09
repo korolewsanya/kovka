@@ -18,22 +18,26 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
-require_once '../../db_connection.php';
+include "../../db_connection.php";
 
 $adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
 if ($adminCod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+$isAdmin = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1, 4)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAdmin = true;
+            break;
+        }
+    }
+}
 
 if (!$isAdmin) {
-    sendJson(['error' => true, 'message' => 'Forbidden: not admin']);
+    sendJson(['error' => true, 'message' => 'Forbidden: not admin/manager']);
 }
 
 $id = isset($_POST['id']) ? $_POST['id'] : '';

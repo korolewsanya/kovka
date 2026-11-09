@@ -1,63 +1,64 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 define('APP_START', true);
 require_once '../../security.php';
 security_headers();
 
-// ИЗМЕНЕНО: Проверка метода POST уже была, оставляем
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die('Method not allowed');
+function sendJson($data) {
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
-require_once '../../db_connection.php';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['error' => true, 'message' => 'Method not allowed']);
+}
 
-$response = array();
+include "../../db_connection.php";
 
-// ИЗМЕНЕНО: Добавлена проверка admin_cod
 $adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
 if ($adminCod === '') {
-    http_response_code(403);
-    echo json_encode(array("error" => true, "message" => "Forbidden: empty admin_cod"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-// ИЗМЕНЕНО: Проверяем, что это админ (class_work = 1)
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем админа (или менеджера)
+$isAdmin = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup` WHERE `class_work` IN (1, 4)");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAdmin = true;
+            break;
+        }
+    }
+}
 
 if (!$isAdmin) {
-    http_response_code(403);
-    echo json_encode(array("error" => true, "message" => "Forbidden: not admin"));
-    exit;
+    sendJson(['error' => true, 'message' => 'Forbidden: not admin/manager']);
 }
 
-// ИЗМЕНЕНО: Заменил $_POST['...'] на безопасную проверку isset()
-$date = isset($_POST['date']) ? $_POST['date'] : '';
-$spec = isset($_POST['spec']) ? $_POST['spec'] : '';
-$name = isset($_POST['name']) ? $_POST['name'] : '';
+$date   = isset($_POST['date'])   ? $_POST['date']   : '';
+$spec   = isset($_POST['spec'])   ? $_POST['spec']   : '';
+$name   = isset($_POST['name'])   ? $_POST['name']   : '';
 $nachis = isset($_POST['nachis']) ? $_POST['nachis'] : '';
 $poluch = isset($_POST['poluch']) ? $_POST['poluch'] : '';
 
-// ИЗМЕНЕНО: Более строгая проверка на пустые поля
 if ($date === '' || $spec === '' || $name === '' || $nachis === '' || $poluch === '') {
-    $response['error'] = true;
-    $response['message'] = "Insufficient parameters";
-} else {
-    $stmt = $conn->prepare("INSERT INTO `zp`(`date`, `spec`, `name`, `nachis`, `poluch`) VALUES (?,?,?,?,?)");
-    $stmt->bind_param("sssss",$date,$spec,$name,$nachis,$poluch);
-
-    if($stmt->execute() == TRUE){
-        $response['error'] = false;
-        $response['message'] = "zp created successfully!";
-    } else{
-        $response['error'] = true;
-        $response['message'] = "failed\n ".$conn->error;
-    }
-    $stmt->close();
+    sendJson(['error' => true, 'message' => 'Insufficient parameters']);
 }
-echo json_encode($response);
+
+$stmt = $conn->prepare("INSERT INTO `zp`(`date`, `spec`, `name`, `nachis`, `poluch`) VALUES (?,?,?,?,?)");
+$stmt->bind_param("sssss", $date, $spec, $name, $nachis, $poluch);
+
+if ($stmt->execute()) {
+    sendJson(['error' => false, 'message' => 'zp created successfully!']);
+} else {
+    sendJson(['error' => true, 'message' => 'failed: ' . $conn->error]);
+}
+$stmt->close();
+$conn->close();
 ?>

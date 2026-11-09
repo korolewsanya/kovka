@@ -1,83 +1,96 @@
 <?php
-// Включаем вывод ошибок для отладки (потом можно убрать)
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
 
 define('APP_START', true);
-require_once '../security.php'; // Исправлен путь
+require_once 'config.php';
+require_once ROOT_DIR . 'security.php';
 security_headers();
 
-// Функция должна быть объявлена ДО её первого вызова!
-function sendResponse($error, $message, $fileName = '', $fileUrl = '') {
-    // Очищаем буфер вывода от случайных пробелов/warnings
+function sendJson($data) {
     while (ob_get_level() > 0) { ob_end_clean(); }
     header('Content-Type: application/json; charset=utf-8');
-    $response = [
-        'error' => $error,
-        'message' => $message
-    ];
-    if ($fileName) {
-        $response['fileName'] = $fileName;
-    }
-    if ($fileUrl) {
-        $response['fileUrl'] = $fileUrl;
-    }
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Проверка apicall
 if (!isset($_GET['apicall']) || $_GET['apicall'] !== 'uploadpic') {
-    sendResponse(true, 'Invalid API call');
+    sendJson(['error' => true, 'message' => 'Неверный вызов API']);
 }
 
-require_once '../db_connection.php'; // Исправлен путь
+include ROOT_DIR . "db_connection.php";
 
-$adminCod = isset($_POST['admin_cod']) ? trim($_POST['admin_cod']) : '';
+$adminCod = $_POST['admin_cod'] ?? $_GET['admin_cod'] ?? $_POST['cod'] ?? '';
+$adminCod = trim($adminCod);
+
 if ($adminCod === '') {
-    sendResponse(true, 'Forbidden: empty admin_cod');
+    sendJson(['error' => true, 'message' => 'Доступ запрещён: пустой код']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work = 1 LIMIT 1");
-if (!$stmt) {
-    sendResponse(true, 'DB prepare error: ' . $conn->error);
-}
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
-$conn->close();
-
-if (!$isAdmin) {
-    sendResponse(true, 'Forbidden: not admin');
-}
-
-$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/Kovka_git/kovka/img/';
-
-if (!is_dir($uploadDir)) {
-    if (!mkdir($uploadDir, 0777, true)) {
-        sendResponse(true, 'Cannot create upload dir: ' . $uploadDir);
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['pic'])) {
-    $file = $_FILES['pic'];
-    if ($file['error'] === UPLOAD_ERR_OK) {
-        $originalName = basename($file['name']);
-        $newName = time() . '_' . $originalName;
-        $destination = $uploadDir . $newName;
-        
-        if (move_uploaded_file($file['tmp_name'], $destination)) {
-            $fileUrl = 'http://192.168.1.156/Kovka_git/kovka/img/' . $newName;
-            sendResponse(false, 'File uploaded successfully', $newName, $fileUrl);
-        } else {
-            sendResponse(true, 'Failed to move uploaded file to: ' . $destination);
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAuth = true;
+            break;
         }
-    } else {
-        sendResponse(true, 'Upload error code: ' . $file['error']);
     }
-} else {
-    sendResponse(true, 'No file or invalid request method');
 }
-?>
+
+if (!$isAuth) {
+    sendJson(['error' => true, 'message' => 'Доступ запрещён: неверный код']);
+}
+
+$uploadDir = UPLOAD_DIR;
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['pic'])) {
+    sendJson(['error' => true, 'message' => 'Файл не передан или неверный метод запроса']);
+}
+
+$file = $_FILES['pic'];
+if ($file['error'] !== UPLOAD_ERR_OK) {
+    sendJson(['error' => true, 'message' => 'Ошибка загрузки, код: ' . $file['error']]);
+}
+
+// берём название из поля tags (то, что пользователь ввёл в EditText)
+$tags = isset($_POST['tags']) ? trim($_POST['tags']) : '';
+
+$tags = urldecode($tags);
+
+// разрешаем кириллицу, латиницу, цифры, пробелы, - и _
+// Всё остальное (/, \, :, *, ?, ", <, >, |, управляющие символы) — удаляем
+$safe = preg_replace('/[^\p{Cyrillic}\p{Latin}0-9\s\-_]+/u', '', $tags);
+$safe = trim(preg_replace('/\s+/u', '_', $safe));
+
+if ($safe === '') {
+    $safe = 'image';
+}
+
+// Расширение: берём из исходного имени, если неизвестное — .jpg
+$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+if (!in_array($ext, ['jpg','jpeg','png','webp','gif'], true)) {
+    $ext = 'jpg';
+}
+
+// Имя = <Название>_<timestamp>.<ext> — чтобы одноимённые файлы не перезаписывались
+$newName = $safe . '_' . time() . '.' . $ext;
+$destination = $uploadDir . $newName;
+
+if (move_uploaded_file($file['tmp_name'], $destination)) {
+    // ВАЖНО: для кириллицы rawurlencode обязателен — иначе Android/браузер
+    // не найдёт файл по URL (получит %D0%9A... вместо К)
+    $fileUrl = UPLOAD_URL . rawurlencode($newName);
+    sendJson([
+        'error'    => false,
+        'message'  => 'Файл успешно загружен',
+        'fileName' => $newName,
+        'fileUrl'  => $fileUrl
+    ]);
+} else {
+    sendJson(['error' => true, 'message' => 'Не удалось сохранить файл']);
+}

@@ -4,7 +4,8 @@ ini_set('display_errors', 0);
 ob_start();
 
 define('APP_START', true);
-require_once '../security.php';
+require_once 'config.php';
+require_once ROOT_DIR . 'security.php'; 
 security_headers();
 
 function sendJson($data) {
@@ -18,28 +19,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJson(['error' => true, 'message' => 'Method not allowed']);
 }
 
-include "../db_connection.php";
+include ROOT_DIR . "db_connection.php";
 
-// Android шлет "cod" (см. ApiService.java)
 $cod = $_POST['cod'] ?? '';
 if ($cod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
 }
 
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
-$conn->close();
-
-if (!$isAdmin) {
-    sendJson(['error' => true, 'message' => 'Forbidden: not admin']);
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($cod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
 }
 
-// Ищем файлы в папке kovka/img/
-$directory = __DIR__ . '/../img/'; 
+if (!$isAuth) {
+    sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
+}
+
+$directory = UPLOAD_DIR;
 
 if (!is_dir($directory)) {
     sendJson(['error' => true, 'message' => 'Папка не найдена: ' . $directory]);
@@ -52,11 +54,11 @@ foreach ($images as $image) {
     if (is_file($directory . $image)) {
         $result[] = [
             'name' => $image,
-            'url' => '../img/' . $image
+            'url' => RELATIVE_IMG_URL . rawurlencode($image)
         ];
     }
 }
 
-// Отдаем массив картинок
 sendJson($result);
+mysqli_close($conn);
 ?>

@@ -4,7 +4,8 @@ ini_set('display_errors', 0);
 ob_start();
 
 define('APP_START', true);
-require_once '../security.php';
+require_once 'config.php';
+require_once ROOT_DIR . 'security.php';
 security_headers();
 
 function sendJson($data) {
@@ -15,49 +16,84 @@ function sendJson($data) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    sendJson(['success' => false, 'error' => 'Method not allowed']);
+    sendJson(['success' => false, 'error' => 'Метод не разрешён']);
 }
 
-include "../db_connection.php";
+include ROOT_DIR . "db_connection.php";
 
-$adminCod = $_POST['admin_cod'] ?? '';
+//принимаем admin_cod и из POST, и из GET; trim
+$adminCod = trim($_POST['admin_cod'] ?? ($_GET['admin_cod'] ?? ($_POST['cod'] ?? '')));
+
 if ($adminCod === '') {
-    sendJson(['success' => false, 'error' => 'Forbidden: empty admin_cod']);
+    sendJson(['success' => false, 'error' => 'Доступ запрещён: пустой код']);
 }
 
-// ИСПРАВЛЕНО: Добавлено слово IN перед списком ролей
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? AND class_work IN (1, 2, 4) LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAdmin = ($res && $res->num_rows > 0);
-$stmt->close();
-$conn->close();
-
-if (!$isAdmin) {
-    sendJson(['success' => false, 'error' => 'Forbidden: not admin']);
+// проверка роли — только админ (1) и дизайнер (2)
+$isAllowed = false;
+$r = mysqli_query($conn, "SELECT `cod`, `class_work` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $cw = (int)$row['class_work'];
+            if (in_array($cw, [1, 2], true)) {
+                $isAllowed = true;
+            } else {
+                sendJson(['success' => false, 'error' => 'Недостаточно прав: переименовывать изображения могут только администратор и дизайнер']);
+            }
+            break;
+        }
+    }
 }
 
+if (!$isAllowed) {
+    sendJson(['success' => false, 'error' => 'Доступ запрещён: неверный код']);
+}
+
+// basename защищает от ../ и слэшей
 $oldName = basename($_POST['old_name'] ?? '');
 $newName = basename($_POST['new_name'] ?? '');
 
+if ($oldName === '' || $oldName === '.' || $oldName === '..') {
+    sendJson(['success' => false, 'error' => 'Некорректное исходное имя файла']);
+}
+if ($newName === '' || $newName === '.' || $newName === '..') {
+    sendJson(['success' => false, 'error' => 'Некорректное новое имя файла']);
+}
+
+// разрешаем только изображения — и по старому, и по новому имени
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-$ext = pathinfo($newName, PATHINFO_EXTENSION);
 
-if (!in_array(strtolower($ext), $allowedExtensions)) {
-    sendJson(['success' => false, 'error' => 'Invalid file extension']);
+$oldExt = strtolower(pathinfo($oldName, PATHINFO_EXTENSION));
+if (!in_array($oldExt, $allowedExtensions, true)) {
+    sendJson(['success' => false, 'error' => 'Исходный файл — не изображение']);
 }
 
-$oldPath = __DIR__ . '/../img/' . $oldName;
-$newPath = __DIR__ . '/../img/' . $newName;
+$newExt = strtolower(pathinfo($newName, PATHINFO_EXTENSION));
+if (!in_array($newExt, $allowedExtensions, true)) {
+    sendJson(['success' => false, 'error' => 'Недопустимое расширение нового файла']);
+}
 
-if (file_exists($oldPath)) {
-    if (rename($oldPath, $newPath)) {
-        sendJson(['success' => true, 'new_name' => $newName]);
-    } else {
-        sendJson(['success' => false, 'error' => 'Cannot rename file']);
-    }
+$oldPath = UPLOAD_DIR . $oldName;
+$newPath = UPLOAD_DIR . $newName;
+
+// проверяем, что оба пути реально внутри UPLOAD_DIR
+$realUpload = realpath(UPLOAD_DIR);
+if ($realUpload === false) {
+    sendJson(['success' => false, 'error' => 'Каталог загрузок недоступен']);
+}
+
+$realOld = realpath($oldPath);
+if ($realOld === false || strpos($realOld, $realUpload) !== 0) {
+    sendJson(['success' => false, 'error' => 'Исходный файл не найден']);
+}
+
+// не даём перезаписать существующий файл
+if (file_exists($newPath)) {
+    sendJson(['success' => false, 'error' => 'Файл с таким именем уже существует']);
+}
+
+if (rename($realOld, $newPath)) {
+    sendJson(['success' => true, 'new_name' => $newName, 'message' => 'Файл переименован']);
 } else {
-    sendJson(['success' => false, 'error' => 'File not found']);
+    sendJson(['success' => false, 'error' => 'Не удалось переименовать файл']);
 }
-?>

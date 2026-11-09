@@ -1,4 +1,5 @@
 <?php
+
 if (!function_exists('csrf_check')) {
     require_once '../security.php';
     require_once 'auth_check.php';
@@ -37,9 +38,10 @@ if ($c && $po) {
         while ($row = $result->fetch_assoc()) {
             $name = $row["name"] ?? $row["names"] ?? '';
             echo "<tbody><tr>";
-            echo "<td>" . htmlspecialchars($name) . "</td>";
-            echo "<td>" . htmlspecialchars($row["date"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["itogo"] ?? $row["poluch"] ?? '') . "</td>";
+            // ИЗМЕНЕНО: добавлен padding: 8px и word-break: break-word для нормального отображения в WebView
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px; word-break: break-word;'>" . htmlspecialchars($name) . "</td>";
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px;'>" . htmlspecialchars($row["date"]) . "</td>";
+            echo "<td style='border:1px solid black; border-collapse:collapse; padding: 8px;'>" . htmlspecialchars($row["itogo"] ?? $row["poluch"] ?? '') . "</td>";
             echo "</tr></tbody>";
         }
         echo "</table>";
@@ -78,4 +80,3 @@ if ($c && $po) {
     echo "<p>Выберите период и нажмите «Показать».</p>";
 }
 $conn->close();
-?>

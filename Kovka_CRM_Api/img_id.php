@@ -25,13 +25,17 @@ if ($adminCod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty admin_cod']);
 }
 
-// Разрешаем менять картинку всем авторизованным (админам и дизайнерам)
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $adminCod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAuth = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверяем код (любая роль)
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($adminCod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
 if (!$isAuth) {
     sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
@@ -45,9 +49,8 @@ $stmt->bind_param("s", $img);
 if ($stmt->execute()) {
     sendJson(['error' => false, 'message' => 'Изображение обновлено']);
 } else {
-    sendJson(['error' => true, 'message' => 'Ошибка БД: ' . $stmt->error]);
+    sendJson(['error' => true, 'message' => 'failed: ' . $conn->error]);
 }
-
 $stmt->close();
 $conn->close();
 ?>

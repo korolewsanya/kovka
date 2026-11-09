@@ -1,6 +1,12 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 define('APP_START', true);
-require_once '../security.php';
+require_once 'config.php';
+require_once ROOT_DIR . 'security.php';
 security_headers();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -10,26 +16,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-include "../db_connection.php";
+include ROOT_DIR . "db_connection.php";
 
 $cod = isset($_POST['cod']) ? trim($_POST['cod']) : '';
 if ($cod === '') {
     http_response_code(403);
-    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    echo json_encode(['error' => true, 'message' => 'Forbidden: empty cod']);
     exit;
 }
 
-// Проверка, что код существует (любая роль)
-$stmt = $conn->prepare("SELECT id FROM dostup WHERE cod = ? LIMIT 1");
-$stmt->bind_param("s", $cod);
-$stmt->execute();
-$res = $stmt->get_result();
-$isAuth = ($res && $res->num_rows > 0);
-$stmt->close();
+// Проверка через password_verify
+$isAuth = false;
+$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+if ($r) {
+    while ($row = mysqli_fetch_assoc($r)) {
+        if (password_verify($cod, $row['cod'])) {
+            $isAuth = true;
+            break;
+        }
+    }
+}
 
 if (!$isAuth) {
     http_response_code(403);
-    echo json_encode(['error' => true, 'message' => 'Forbidden']);
+    echo json_encode(['error' => true, 'message' => 'Forbidden: invalid cod']);
     exit;
 }
 
@@ -45,17 +55,18 @@ $tables = [
     'melo4i'   => ['folder' => 'Мелочи',     'label' => 'Мелочи']
 ];
 
-$baseUrl = 'http://192.168.1.156/Kovka_git/kovka/img/';
 $products = [];
 
 foreach ($tables as $table => $info) {
-    $folder = $info['folder'];
     $sql = "SELECT id, izdelie, image, Prise FROM `$table`";
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $imageFile = basename($row['image']);
-            $imageUrl = $baseUrl . rawurlencode($imageFile);
+
+            // ИСПОЛЬЗУЕМ КОНСТАНТУ ИЗ CONFIG.PHP
+            $imageUrl = IMG_BASE . rawurlencode($imageFile);
+
             $products[] = [
                 'id'       => $row['id'],
                 'image'    => $row['image'],
@@ -70,4 +81,3 @@ foreach ($tables as $table => $info) {
 
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode($products, JSON_UNESCAPED_UNICODE);
-?>
