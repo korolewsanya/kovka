@@ -1,19 +1,14 @@
 <?php
-
-error_reporting(0);
-ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 ob_start();
 
 define('APP_START', true);
-
 require_once '../../security.php';
 security_headers();
 
-function sendJson($data)
-{
-    while (ob_get_level() > 0) {
-        ob_end_clean();
-    }
+function sendJson($data) {
+    while (ob_get_level() > 0) { ob_end_clean(); }
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
@@ -30,19 +25,23 @@ if ($cod === '') {
     sendJson(['error' => true, 'message' => 'Forbidden: empty cod']);
 }
 
-// Проверка кода через password_verify
-$isAuth = false;
-$r = mysqli_query($conn, "SELECT `cod` FROM `dostup`");
+// 1. Ищем пользователя по коду
+$foundClassWork = null;
+$foundProf = null;
+$foundName = null;
+$r = mysqli_query($conn, "SELECT `cod`, `prof`, `name`, `class_work` FROM `dostup`");
 if ($r) {
     while ($row = mysqli_fetch_assoc($r)) {
         if (password_verify($cod, $row['cod'])) {
-            $isAuth = true;
+            $foundClassWork = $row['class_work']; // это user_id
+            $foundProf = $row['prof'];
+            $foundName = $row['name'];
             break;
         }
     }
 }
 
-if (!$isAuth) {
+if ($foundClassWork === null) {
     sendJson(['error' => true, 'message' => 'Forbidden: invalid cod']);
 }
 
@@ -65,17 +64,15 @@ if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ER
 $tz = $_POST['tz'] ?? '';
 $ot = $_POST['ot'] ?? '';
 $date = $_POST['date'] ?? '';
-$prof = $_POST['prof'] ?? '';
-$class_work = $_POST['class_work'] ?? '';
-$name = $_POST['name'] ?? '';
 $image = $_POST['image'] ?? '';
 
-if ($tz === '' || $ot === '' || $date === '' || $prof === '' || $class_work === '' || $name === '' || $image === '') {
+if ($tz === '' || $ot === '' || $date === '' || $image === '') {
     sendJson(['error' => true, 'message' => 'Insufficient parameters']);
 }
 
+// 2. Записываем в otchet class_work (user_id), prof, name из dostup
 $stmt = $conn->prepare("INSERT INTO `otchet`(`tz`, `otchet`, `date`, `cod`, `prof`, `class_work`, `name`, `image`) VALUES (?,?,?,?,?,?,?,?)");
-$stmt->bind_param("ssssssss", $tz, $ot, $date, $cod, $prof, $class_work, $name, $image);
+$stmt->bind_param("ssssssss", $tz, $ot, $date, $cod, $foundProf, $foundClassWork, $foundName, $image);
 
 if ($stmt->execute()) {
     sendJson(['error' => false, 'message' => 'otchet created successfully!']);
@@ -84,3 +81,4 @@ if ($stmt->execute()) {
 }
 $stmt->close();
 $conn->close();
+?>

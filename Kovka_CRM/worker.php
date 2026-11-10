@@ -6,13 +6,14 @@ security_headers();
 
 include "../db_connection.php";
 
-//Ссылка на выход
+// Ссылка на выход
 echo '<a href="logout.php" style="float: right; margin: 10px;">Выйти</a>';
 
-// ===== ИСПРАВЛЕНО: берём роль ИЗ СЕССИИ, а не из GET =====
+// ===== Берем роль И код из СЕССИИ =====
 $role = $_SESSION['user_role'] ?? 'car';
+$user_cod = $_SESSION['user_cod'] ?? '';
 
-// Белый список допустимых ролей (защита от подмены)
+// Белый список допустимых ролей
 $allowed_roles = ['admin', 'car', 'color', 'diz', 'slesar', 'svar'];
 if (!in_array($role, $allowed_roles)) {
     $role = 'car';
@@ -63,55 +64,67 @@ $current_role = $roles[$role];
     Вы вошли как: <?php echo htmlspecialchars($current_role['title']); ?>
 </div>
 
-<!-- <p style="color:red">___При тестировании рекомендуется сбросить данные до исходных значений___</p>
-<a href="reset.php">🔄 Сбросить демо-данные</a> -->
 <br>
 <br>
 
 <div class="tableFixHead">
 
 <?php
-// Получаем последний код доступа
-$userid = '';
-$sql = "SELECT cod FROM cod ORDER BY id DESC LIMIT 1";
-$result = $conn->query($sql);
-if ($result && $row = $result->fetch_assoc()) {
-    $userid = $row['cod'];
-}
-
-// Вывод таблицы отчётов
-if ($userid) {
-    $stmt = $conn->prepare("SELECT id, date, tz, otchet, class_work, prof, name, cod FROM otchet WHERE cod = ? ORDER BY id DESC");
-    $stmt->bind_param("s", $userid);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res->num_rows > 0) {
-        echo "<table style='border:1px solid black; border-collapse:collapse; position:sticky; max-height:400px;'>
-            <thead>
-                <tr>
-                    <th>№</th>
-                    <th>Дата</th>
-                    <th>Тех.задание</th>
-                    <th>Отчёт</th>
-                </tr>
-            </thead>
-            <tbody>";
-        while ($row = $res->fetch_assoc()) {
-            echo "<tr data-id='{$row['id']}' data-class_work='" . htmlspecialchars($row['class_work']) . "' data-prof='" . htmlspecialchars($row['prof']) . "' data-name='" . htmlspecialchars($row['name']) . "' data-cod='" . htmlspecialchars($row['cod']) . "'
-                       data-tz='" . htmlspecialchars($row['tz']) . "' data-otchet='" . htmlspecialchars($row['otchet']) . "'>";
-            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['date']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['tz']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['otchet']) . "</td>";
-            echo "</tr>";
+// ===== ИСПОЛЬЗУЕМ КОД ИЗ СЕССИИ =====
+if ($user_cod) {
+    // Ищем пользователя по коду, чтобы получить его class_work (уникальный ID)
+    $found_user = null;
+    $r = mysqli_query($conn, "SELECT `id`, `class_work`, `prof`, `name`, `cod` FROM `dostup`");
+    if ($r) {
+        while ($user = mysqli_fetch_assoc($r)) {
+            if (password_verify($user_cod, $user['cod'])) {
+                $found_user = $user;
+                break;
+            }
         }
-        echo "</tbody></table>";
-    } else {
-        echo "<p>Нет отчётов.</p>";
     }
-    $stmt->close();
+
+    if ($found_user) {
+        $user_class_work = $found_user['class_work'];
+        $user_prof = $found_user['prof'];
+        $user_name = $found_user['name'];
+
+        // Вывод таблицы отчётов по class_work (уникальный ID пользователя)
+        $stmt = $conn->prepare("SELECT id, date, tz, otchet, class_work, prof, name, cod FROM otchet WHERE class_work = ? ORDER BY id DESC");
+        $stmt->bind_param("s", $user_class_work);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        if ($res->num_rows > 0) {
+            echo "<table style='border:1px solid black; border-collapse:collapse; position:sticky; max-height:400px;'>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата</th>
+                        <th>Тех.задание</th>
+                        <th>Отчёт</th>
+                    </tr>
+                </thead>
+                <tbody>";
+            while ($row = $res->fetch_assoc()) {
+                echo "<tr data-id='{$row['id']}' data-class_work='" . htmlspecialchars($row['class_work']) . "' data-prof='" . htmlspecialchars($row['prof']) . "' data-name='" . htmlspecialchars($row['name']) . "' data-cod='" . htmlspecialchars($row['cod']) . "'
+                           data-tz='" . htmlspecialchars($row['tz']) . "' data-otchet='" . htmlspecialchars($row['otchet']) . "'>";
+                echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['date']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['tz']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['otchet']) . "</td>";
+                echo "</tr>";
+            }
+            echo "</tbody></table>";
+        } else {
+            echo "<p>Нет отчётов.</p>";
+        }
+        $stmt->close();
+    } else {
+        echo "<p>Пользователь не найден.</p>";
+    }
 } else {
-    echo "<p>Код доступа не найден.</p>";
+    echo "<p>Код доступа не найден в сессии.</p>";
 }
 
 // Обработка действий (Добавить, Изменить, Удалить)
@@ -197,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['Save']) || isset($_P
     <form method="POST">
         <?php echo csrf_token_field(); ?>
         <input type="hidden" id="id" name="id" value="0">
-        <input type="hidden" id="cod" name="cod" readonly value="<?php echo htmlspecialchars($userid ?? ''); ?>">
+        <input type="hidden" id="cod" name="cod" readonly value="<?php echo htmlspecialchars($user_cod ?? ''); ?>">
         <input type="hidden" id="class_work" name="class_work" value="">
         <input type="text" id="prof" name="prof" readonly value="<?php echo htmlspecialchars($current_role['prof_value']); ?>"> <br>
         <input type="text" id="name" name="name" value="" placeholder="Имя"> <br>
@@ -227,19 +240,25 @@ if ($result && $result->num_rows > 0) {
             </tr>
         </thead>";
     while ($row = $result->fetch_assoc()) {
-        $id = htmlspecialchars($row['Id']);
+        $id = htmlspecialchars($row['Id'] ?? '');
+        $date = htmlspecialchars($row['date'] ?? '');
+        $izdelie = htmlspecialchars($row['izdelie'] ?? '');
+        $prise = htmlspecialchars($row['Prise'] ?? '');
+        $pay = htmlspecialchars($row['Pay'] ?? '');
+        $proces = htmlspecialchars($row['Proces'] ?? '');
+        
         echo "<tbody>
             <tr class='clickable-row' data-id='$id'>
-                <td>" . htmlspecialchars($row['Id']) . "</td>
-                <td>" . htmlspecialchars($row['date']) . "</td>
-                <td>" . htmlspecialchars($row['izdelie']) . "</td>
-                <td>" . htmlspecialchars($row['Prise']) . "</td>
-                <td>" . htmlspecialchars($row['Pay']) . "</td>
-                <td>" . htmlspecialchars($row['Proces']) . "</td>
+                <td>$id</td>
+                <td>$date</td>
+                <td>$izdelie</td>
+                <td>$prise</td>
+                <td>$pay</td>
+                <td>$proces</td>
             </tr>
         </tbody>";
     }
-    echo "<table>";
+    echo "</table>";
 } else {
     echo "<p>Нет заказов.</p>";
 }
